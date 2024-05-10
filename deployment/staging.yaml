@@ -2,40 +2,60 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: cpm-notification-svc
+  name: go-boiler-plate-svc/v2
   labels:
-    app: cpm-notification-service
+    app: go-boiler-plate/v2
 spec:
   ports:
   - port: 80
-    targetPort: 9004
+    targetPort: 80
     name: backend
   selector:
-    app: cpm-notification-service
+    app: go-boiler-plate/v2
   type: NodePort
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cpm-notification-service
+  name: go-boiler-plate/v2
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: cpm-notification-service
+      app: go-boiler-plate/v2
   template:
     metadata:
       labels:
-        app: cpm-notification-service
+        app: go-boiler-plate/v2
     spec:
       containers:
-      - name: notification-service
-        image: praisindo.azurecr.io/cpm/notification-service:__imageTag__
+      - name: go-boiler-plate/v2
+        image: praisindo.azurecr.io/cpm/go-boiler-plate-v2:__imageTag__
         ports:
-        - containerPort: 9004
+        - containerPort: 80
         env:
           - name: APP_ENV
             value: "staging"
+          - name: APP_NAME
+            value: "Account Service"
+          - name: GIN_MODE
+            value: "release"
+          - name: APP_DEBUG
+            value: true
+          - name: APP_VERSION
+            value: "0.0.2"
+          - name: HTTP_SERVER_PORT
+            value: 80
+          - name: FILE_MAX_SIZE
+            value: 5242880
+          - name: FILE_PATH
+            value: "./public/"
+          - name: ALLOW_ORIGINS
+            value: "*"
+          - name: ALLOW_METHODS
+            value: "POST,PUT,GET,DELETE,OPTIONS"
+          - name: ALLOW_HEADERS
+            value: "*"
       imagePullSecrets:
         - name: my-azure-key
 ---

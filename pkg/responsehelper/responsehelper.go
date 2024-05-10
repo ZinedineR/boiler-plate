@@ -1,7 +1,7 @@
 package responsehelper
 
 import (
-	"ms-batch/internal/base/domain"
+	"boiler-plate/internal/base/domain"
 )
 
 func GetStatusResponse(statusCode int, description string) *domain.Status {

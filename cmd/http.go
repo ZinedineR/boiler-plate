@@ -1,10 +1,11 @@
 package cmd
 
 import (
-	"ms-batch/app/api"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"boiler-plate/app/api"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -21,11 +22,11 @@ var HttpCmd = &cobra.Command{
 		// running open telemetry
 		// cleanup := initTracer()
 		// defer cleanup(context.Background())
-		app := api.New(os.Getenv("APP_NAME"), baseHandler, templateHandler)
+		app := api.New(appConf.AppEnvConfig.AppName, baseHandler, settingsHandler)
 
 		echan := make(chan error)
 		go func() {
-			echan <- app.Run()
+			echan <- app.Run(appConf)
 		}()
 
 		//go func() {

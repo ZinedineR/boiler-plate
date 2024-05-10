@@ -1,14 +1,16 @@
 package api
 
 import (
+	"boiler-plate/app/appconf"
 	"fmt"
-	"github.com/gin-contrib/cors"
-	"ms-batch/internal/base/handler"
-	tempHandler "ms-batch/internal/template/handler"
-	"ms-batch/pkg/server"
 	"os"
 	"strings"
 
+	"boiler-plate/internal/base/handler"
+	tempHandler "boiler-plate/internal/settings/handler"
+	"boiler-plate/pkg/server"
+
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	gintrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/gin-gonic/gin"
 )
@@ -16,23 +18,28 @@ import (
 type HttpServe struct {
 	router          *gin.Engine
 	base            *handler.BaseHTTPHandler
-	templateHandler *tempHandler.HTTPHandler
+	settingsHandler *tempHandler.HTTPHandler
 }
 
-func (h *HttpServe) Run() error {
-	h.setupRouter()
+func (h *HttpServe) Run(config *appconf.Config) error {
+	h.setupSettingsRouter()
+	h.setupAccountRouter()
+	h.setupRegistrationRouter()
+	h.setupVerifyRouter()
+	h.setupInvestorCategoryRouter()
+	h.setupDevRouter(config)
 	h.base.Handlers = h
 
-	if h.base.IsStaging() {
-		h.setupDevRouter()
-	}
+	//if h.base.IsStaging() {
+	//	h.setupDevRouter()
+	//}
 
-	return h.router.Run(fmt.Sprintf(":%s", os.Getenv("HTTP_SERVER_PORT")))
+	return h.router.Run(fmt.Sprintf(":%s", config.AppEnvConfig.HttpPort))
 }
 
 func New(
 	appName string, base *handler.BaseHTTPHandler,
-	template *tempHandler.HTTPHandler,
+	settings *tempHandler.HTTPHandler,
 ) server.App {
 
 	if os.Getenv("APP_ENV") != "production" {
@@ -57,15 +64,15 @@ func New(
 	r.Use(gintrace.Middleware(appName, gintrace.WithResourceNamer(pathNamer)))
 	r.Use(ResponseHeaderFormat())
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     strings.Split(os.Getenv("ALLOW_ORIGINS"), ","),
-		AllowMethods:     strings.Split(os.Getenv("ALLOW_METHODS"), ","),
-		AllowHeaders:     strings.Split(os.Getenv("ALLOW_HEADERS"), ","),
+		AllowOrigins:     base.AppConfig.AppEnvConfig.AllowOrigins,
+		AllowMethods:     base.AppConfig.AppEnvConfig.AllowMethods,
+		AllowHeaders:     base.AppConfig.AppEnvConfig.AllowHeaders,
 		AllowCredentials: true,
 	}))
 
 	return &HttpServe{
 		router:          r,
 		base:            base,
-		templateHandler: template,
+		settingsHandler: settings,
 	}
 }

@@ -1,7 +1,9 @@
 package server
 
+import "boiler-plate/app/appconf"
+
 type App interface {
-	Run() error
+	Run(config *appconf.Config) error
 }
 
 type LogMessage struct {

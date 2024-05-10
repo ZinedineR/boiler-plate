@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"ms-batch/internal/base/app"
-	"ms-batch/pkg/server"
+	"boiler-plate/internal/base/app"
+	"boiler-plate/pkg/server"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

@@ -1,7 +1,7 @@
 package app
 
 import (
-	"ms-batch/app/appconf"
+	"boiler-plate/app/appconf"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

@@ -1,0 +1,21 @@
+# used by aws codedeploy
+
+version: 0.0
+os: linux
+files:
+  - source: /binary
+    destination: /home/ubuntu/services/accountsvc-v2/
+  - source: /Dockerfile-dev
+    destination: /home/ubuntu/services/accountsvc-v2/
+  - source: /docker-compose-dev.yml
+    destination: /home/ubuntu/services/accountsvc-v2/
+
+hooks:
+  BeforeInstall:
+    - location: .scripts/before_install.sh
+      timeout: 300
+      runas: ubuntu
+  AfterInstall:
+    - location: .scripts/after_install.sh
+      timeout: 300
+      runas: ubuntu

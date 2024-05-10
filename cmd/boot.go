@@ -1,33 +1,38 @@
 package cmd
 
 import (
+	"boiler-plate/internal/base/handler"
 	"fmt"
-	"github.com/go-playground/validator/v10"
 	"io"
-	appConfiguration "ms-batch/app/appconf"
-	"ms-batch/internal/base/handler"
-	TemplateService "ms-batch/internal/template/service"
-	"ms-batch/pkg/db"
-	"ms-batch/pkg/httpclient"
+	"log"
 	"os"
 
+	appConfiguration "boiler-plate/app/appconf"
+
+	tempHandler "boiler-plate/internal/settings/handler"
+	settingsRepo "boiler-plate/internal/settings/repository"
+	SettingsService "boiler-plate/internal/settings/service"
+	"boiler-plate/pkg/db"
+	"boiler-plate/pkg/httpclient"
+	"boiler-plate/pkg/migration"
+	"boiler-plate/pkg/xvalidator"
+
+	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
-	tempHandler "ms-batch/internal/template/handler"
-	templateRepo "ms-batch/internal/template/repository"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var (
 	appConf         *appConfiguration.Config
 	baseHandler     *handler.BaseHTTPHandler
-	templateHandler *tempHandler.HTTPHandler
-	mongoClientRepo *db.MongoDBClientRepository
-	validate        *validator.Validate
-	httpClient      httpclient.Client
-)
+	settingsHandler *tempHandler.HTTPHandler
 
-func initMongoDB() {
-	mongoClientRepo, _ = db.NewMongoDBRepository("", "", "", 0)
-}
+	sqlClientRepo *db.SQLClientRepository
+	validate      *validator.Validate
+	httpClient    httpclient.Client
+	xvalidate     *xvalidator.Validator
+)
 
 func initHttpclient() {
 	httpClientFactory := httpclient.New()
@@ -35,25 +40,29 @@ func initHttpclient() {
 }
 
 func initHTTP() {
-	appConf = appConfiguration.InitAppConfig()
-	initInfrastructure()
+	initValidator()
+	appConf = appConfiguration.InitAppConfig(xvalidate)
+	initInfrastructure(appConf)
 
-	//appConf.MysqlTZ = postgresClientRepo.TZ
+	// appConf.MysqlTZ = postgresClientRepo.TZ
 
-	baseHandler = handler.NewBaseHTTPHandler(mongoClientRepo.Client, appConf, mongoClientRepo, httpClient)
+	baseHandler = handler.NewBaseHTTPHandler(sqlClientRepo.DB, appConf, sqlClientRepo, httpClient)
 
-	templateRepo := templateRepo.NewRepository(mongoClientRepo.DB, mongoClientRepo)
-	templateService := TemplateService.NewService(templateRepo, validate)
-	templateHandler = tempHandler.NewHTTPHandler(baseHandler, templateService)
+	settingsRepo := settingsRepo.NewRepository(sqlClientRepo.DB, sqlClientRepo)
+	settingsService := SettingsService.NewService(appConf, settingsRepo, validate)
+	settingsHandler = tempHandler.NewHTTPHandler(baseHandler, settingsService)
+
 }
 
-func initInfrastructure() {
-	//initPostgreSQL()
+func initInfrastructure(config *appConfiguration.Config) {
+	initSQL(config)
 	initHttpclient()
-	initMongoDB()
 	initLog()
 }
-
+func initValidator() {
+	validate = validator.New()
+	xvalidate = xvalidator.NewValidator()
+}
 func isProd() bool {
 	return os.Getenv("APP_ENV") == "production"
 }
@@ -85,12 +94,11 @@ func initLog() {
 		logrus.SetOutput(os.Stdout)
 	} else {
 		logrus.SetFormatter(&logrus.JSONFormatter{PrettyPrint: true})
-
 		if lv == "" && os.Getenv("APP_DEBUG") == "True" {
 			level = logrus.DebugLevel
 		}
 		logrus.SetLevel(level)
-
+		// logrus.SetFormatter()
 		if os.Getenv("DEV_FILE_LOG") == "True" {
 			logfile, err := os.OpenFile("log/app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0755)
 			if err != nil {
@@ -102,5 +110,26 @@ func initLog() {
 		} else {
 			logrus.SetOutput(os.Stdout)
 		}
+	}
+}
+
+func initSQL(config *appConfiguration.Config) {
+
+	//var gConfig *gorm.Config
+	gConfig := &gorm.Config{}
+	if os.Getenv("DEV_SHOW_QUERY") == "true" {
+		showQuery := logger.New(
+			log.New(os.Stdout, "\r\n", log.LstdFlags),
+			logger.Config{
+				LogLevel: logger.Info,
+			})
+		gConfig.Logger = showQuery
+	} else {
+		gConfig.Logger = logger.Default.LogMode(logger.Silent)
+	}
+
+	sqlClientRepo, _ = db.NewSQLClientRepository(config, gConfig)
+	if config.IsStaging() {
+		migration.Initmigrate(sqlClientRepo.DB)
 	}
 }

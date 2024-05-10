@@ -1,0 +1,18 @@
+services:
+  accountsvc-v2:
+    container_name: accountsvc-v2
+    build: 
+      context: .
+      dockerfile: ./Dockerfile-dev
+    image: rumbia/gorun-infisical:latest
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.accountsvc-v2.entrypoints=web"
+      - "traefik.http.routers.accountsvc-v2.rule=PathPrefix(`/accountsvc-v2/`)"
+      - "traefik.http.routers.accountsvc-v2.service=accountsvc-v2"
+      - "traefik.http.services.accountsvc-v2.loadbalancer.server.port=80"
+      - "traefik.http.middlewares.accountsvc-v2-strip.stripprefix.prefixes=/accountsvc-v2"
+      - "traefik.http.middlewares.accountsvc-v2-strip.stripprefix.forceslash=false"
+      - "traefik.http.routers.accountsvc-v2.middlewares=accountsvc-v2-strip"
+    volumes:
+      - /home/ubuntu/services/accountsvc-v2:/app

@@ -2,19 +2,20 @@ package handler
 
 import (
 	"fmt"
-	"github.com/golang-jwt/jwt"
-	"github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/mongo"
-	baseModel "ms-batch/pkg/db"
-	"ms-batch/pkg/httpclient"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
-	"ms-batch/app/appconf"
-	"ms-batch/internal/base/app"
-	"ms-batch/pkg/server"
+	baseModel "boiler-plate/pkg/db"
+	"boiler-plate/pkg/httpclient"
+
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
+
+	"boiler-plate/app/appconf"
+	"boiler-plate/internal/base/app"
+	"boiler-plate/pkg/server"
 
 	"github.com/gin-gonic/gin"
 )
@@ -24,16 +25,16 @@ type HandlerFnInterface func(ctx *app.Context) *server.ResponseInterface
 
 type BaseHTTPHandler struct {
 	Handlers   interface{}
-	DB         *mongo.Client
+	DB         *gorm.DB
 	AppConfig  *appconf.Config
-	BaseModel  *baseModel.MongoDBClientRepository
+	BaseModel  *baseModel.SQLClientRepository
 	HttpClient httpclient.Client
 }
 
 func NewBaseHTTPHandler(
-	db *mongo.Client,
+	db *gorm.DB,
 	appConfig *appconf.Config,
-	baseModel *baseModel.MongoDBClientRepository,
+	baseModel *baseModel.SQLClientRepository,
 	httpClient httpclient.Client,
 ) *BaseHTTPHandler {
 	return &BaseHTTPHandler{
@@ -391,21 +392,22 @@ func (b BaseHTTPHandler) UserRunAction(handler HandlerFnInterface) gin.HandlerFu
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 
-			return []byte(os.Getenv("JWT_ACCESS_SECRET")), nil
+			return b.AppConfig.AuthConfig.JwtSecretAccessToken, nil
 		})
 		if err != nil || !token.Valid {
 			logrus.Errorln(fmt.Sprintf("REQUEST ID: %s , message: Unauthorized", ctx.APIReqID))
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"status":  http.StatusUnauthorized,
-				"message": "Unauthorized",
+				"message": "unauthorized",
 			})
 			return
 		}
 
 		// Get user data from token
 		claims := token.Claims.(jwt.MapClaims)
-		ctx.Set("user_id", claims["id"])
-		ctx.Set("user_roles", claims["roles"])
+		ctx.Set("sub", claims["sub"])
+		ctx.Set("role_id", claims["role_id"])
+		ctx.Set("email", claims["email"])
 
 		// Execute handler
 		resp := handler(ctx)

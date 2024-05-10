@@ -1,8 +1,8 @@
 package main
 
 import (
+	"boiler-plate/cmd"
 	"github.com/sirupsen/logrus"
-	"ms-batch/cmd"
 	"os"
 )
 

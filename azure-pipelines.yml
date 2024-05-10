@@ -1,0 +1,67 @@
+# Go
+# Build your Go project.
+# Add steps that test, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/go
+
+trigger:
+- development_v2
+
+variables:
+  GOBIN:  '$(GOPATH)/bin' # Go binaries path
+  GOROOT: '/usr/local/go1.11' # Go installation path
+  GOPATH: '$(system.defaultWorkingDirectory)/gopath' # Go workspace path
+  GOOS: 'linux'
+  GOARCH: 'arm64'
+  
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- task: GoTool@0
+  displayName: Set using GO 1.21.6
+  inputs:
+    version: '1.21.6'
+
+- task: Go@0
+  displayName: Download dependencies
+  inputs:
+    command: 'get'
+    arguments: '-d'
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
+
+- task: Go@0
+  displayName: Build
+  inputs:
+    command: 'build'
+    arguments: '-o "binary"'
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
+    
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: '$(Build.SourcesDirectory)/.scripts'
+    Contents: '**'
+    TargetFolder: '$(Build.BinariesDirectory)/.scripts'
+    OverWrite: true
+  displayName: 'Copy AWS deployment scripts'
+  
+- script: |
+    cp $(System.DefaultWorkingDirectory)/binary $(Build.BinariesDirectory)
+    cp $(System.DefaultWorkingDirectory)/appspec.yml $(Build.BinariesDirectory)    
+    cp $(System.DefaultWorkingDirectory)/docker-compose-dev.yml $(Build.BinariesDirectory)    
+    cp $(System.DefaultWorkingDirectory)/Dockerfile-dev $(Build.BinariesDirectory)    
+  displayName: 'Copy individual file'
+
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(Build.BinariesDirectory)'
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/boiler-plate-v2.zip'
+    replaceExistingArchive: true
+  displayName: 'Archive artifacts'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/boiler-plate-v2.zip'
+    ArtifactName: 'appv2'
+    publishLocation: 'Container'
