@@ -8,43 +8,6 @@ import (
 
 func (h *HttpServe) setupSettingsRouter() {
 	h.GuestRoute("GET", "/settings", h.settingsHandler.FindSettings)
-	h.GuestRoute("GET", "/general", h.settingsHandler.FindGeneral)
-	h.GuestRoute("GET", "/logo", h.settingsHandler.FindLogo)
-	h.GuestRoute("GET", "/password", h.settingsHandler.FindPassword)
-	h.GuestRoute("PUT", "/general", h.settingsHandler.UpdateGeneral)
-	h.GuestRoute("PUT", "/logo", h.settingsHandler.UpdateLogo)
-	h.GuestRoute("PUT", "/password", h.settingsHandler.UpdatePassword)
-
-	h.GuestRoute("GET", "/captcha", h.captchaHandler.GenerateCaptcha)
-	h.GuestRoute("POST", "/login", h.loginHandler.Login)
-}
-
-func (h *HttpServe) setupAccountRouter() {
-	h.UserRoute("POST", "/user/req-update-email", h.accountHandler.ReqUpdateEmail)
-	h.UserRoute("POST", "/user/req-update-phone", h.accountHandler.ReqUpdatePhone)
-	h.UserRoute("PUT", "/user/update-email", h.accountHandler.UpdateEmail)
-	h.UserRoute("PUT", "/user/update-phone", h.accountHandler.UpdatePhone)
-	h.GuestRoute("GET", "/user/contact-information/:id", h.accountHandler.GetContactInformation)
-
-	h.UserRoute("PUT", "/account/information", h.accountHandler.UpdateAccountInformation)
-}
-
-func (h *HttpServe) setupRegistrationRouter() {
-	h.GuestRoute("POST", "/register", h.registrationHandler.Registration)
-}
-
-func (h *HttpServe) setupVerifyRouter() {
-	h.GuestRoute("POST", "/verify", h.verifyHandler.Verify)
-}
-
-func (h *HttpServe) setupInvestorCategoryRouter() {
-	invCategoryRoute := h.router.Group("/api/v2/investor/category")
-
-	invCategoryRoute.POST("/", h.base.UserRunAction(h.invCategoryHandler.Create))
-	invCategoryRoute.GET("/:id", h.base.UserRunAction(h.invCategoryHandler.Detail))
-	invCategoryRoute.DELETE("/:id", h.base.UserRunAction(h.invCategoryHandler.Delete))
-	invCategoryRoute.GET("/", FilterMiddle(), h.base.UserRunAction(h.invCategoryHandler.List))
-	invCategoryRoute.GET("/select", h.base.UserRunAction(h.invCategoryHandler.Select))
 }
 
 func (h *HttpServe) UserRoute(method, path string, f handler.HandlerFnInterface) {
