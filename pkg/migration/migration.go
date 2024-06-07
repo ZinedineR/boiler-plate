@@ -1,15 +1,11 @@
 package migration
 
 import (
-	"boiler-plate/internal/settings/domain"
-	"encoding/base64"
+	"boiler-plate/internal/profile/domain"
 	"fmt"
-	"os"
-	"sort"
-	"time"
-
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+	"sort"
 )
 
 func Initmigrate(db *gorm.DB) {
@@ -23,18 +19,9 @@ func Initmigrate(db *gorm.DB) {
 
 	// Migrate rest of the models
 	logrus.Println(fmt.Println("AutoMigrate Model [table_name]"))
-	db.AutoMigrate(&domain.MainTable{})
+	db.AutoMigrate(&domain.Profile{})
 	logrus.Infoln(fmt.Println("  TableModel [" +
-		(&domain.MainTable{}).TableName() + "]"))
-	// Check if the Category table is empty.
-	// Check if the Category table is empty.
-	var settingsCount int64
-	db.Model(&domain.MainTable{}).Count(&settingsCount)
-
-	if settingsCount == 0 {
-		// The Category table is empty, so seed data.
-		seedDatabase(db)
-	}
+		(&domain.Profile{}).TableName() + "]"))
 }
 
 func executePendingMigrations(db *gorm.DB) {
@@ -94,39 +81,6 @@ func checkError(err error) {
 		logrus.Infoln(fmt.Print(err.Error()))
 		panic(err)
 	}
-}
-
-func seedDatabase(db *gorm.DB) {
-	// Create and insert 1-2 rows of data for the Article table.
-	timeFormat := "02-January-2006-15-4-5"
-
-	newFilename := "default-" + time.Now().Format(timeFormat) + ".png"
-	Settings := &domain.MainTable{
-		ID:                        0,
-		Currency:                  "IDR",
-		TaxFee:                    1.0,
-		ReminderTaxProfileExpired: 1,
-		ValidAccountExpired:       30,
-		LogoImage:                 newFilename,
-		Favicon:                   newFilename,
-		PasswordLength:            8,
-		PasswordExpirationCount:   12,
-		ExpirationReminderDay:     1,
-		ComplexityNumeric:         true,
-	}
-	data, err := base64.StdEncoding.DecodeString("iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mNk+M9Qz0AEYBxVSF+FAAhKDveksOjmAAAAAElFTkSuQmCC")
-	if err != nil {
-		return
-	}
-	filePath := os.Getenv("FILE_PATH")
-	dst, err := os.Create(filePath + newFilename)
-	defer dst.Close()
-	if _, err = dst.Write(data); err != nil {
-		return
-	}
-
-	db.Create(&Settings)
-
 }
 
 // func registerMigration(id string, fm mFunc) {

@@ -9,9 +9,9 @@ import (
 
 	appConfiguration "boiler-plate/app/appconf"
 
-	tempHandler "boiler-plate/internal/settings/handler"
-	settingsRepo "boiler-plate/internal/settings/repository"
-	SettingsService "boiler-plate/internal/settings/service"
+	tempHandler "boiler-plate/internal/profile/handler"
+	ProfileRepo "boiler-plate/internal/profile/repository"
+	ProfileService "boiler-plate/internal/profile/service"
 	"boiler-plate/pkg/db"
 	"boiler-plate/pkg/httpclient"
 	"boiler-plate/pkg/migration"
@@ -24,9 +24,9 @@ import (
 )
 
 var (
-	appConf         *appConfiguration.Config
-	baseHandler     *handler.BaseHTTPHandler
-	settingsHandler *tempHandler.HTTPHandler
+	appConf        *appConfiguration.Config
+	baseHandler    *handler.BaseHTTPHandler
+	ProfileHandler *tempHandler.HTTPHandler
 
 	sqlClientRepo *db.SQLClientRepository
 	validate      *validator.Validate
@@ -48,9 +48,9 @@ func initHTTP() {
 
 	baseHandler = handler.NewBaseHTTPHandler(sqlClientRepo.DB, appConf, sqlClientRepo, httpClient)
 
-	settingsRepo := settingsRepo.NewRepository(sqlClientRepo.DB, sqlClientRepo)
-	settingsService := SettingsService.NewService(appConf, settingsRepo, validate)
-	settingsHandler = tempHandler.NewHTTPHandler(baseHandler, settingsService)
+	ProfileRepo := ProfileRepo.NewRepository(sqlClientRepo.DB, sqlClientRepo)
+	ProfileService := ProfileService.NewService(appConf, ProfileRepo, sqlClientRepo.DB, validate)
+	ProfileHandler = tempHandler.NewHTTPHandler(baseHandler, ProfileService)
 
 }
 

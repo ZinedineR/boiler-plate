@@ -6,8 +6,12 @@ import (
 	"boiler-plate/internal/base/handler"
 )
 
-func (h *HttpServe) setupSettingsRouter() {
-	h.GuestRoute("GET", "/settings", h.settingsHandler.FindSettings)
+func (h *HttpServe) setupProfileRouter() {
+	h.GuestRoute("GET", "/profile", h.ProfileHandler.Find)
+	h.GuestRoute("POST", "/profile", h.ProfileHandler.Create)
+	h.GuestRoute("PUT", "/profile/:id", h.ProfileHandler.Update)
+	h.GuestRoute("GET", "/profile/:id", h.ProfileHandler.Detail)
+	h.GuestRoute("DELETE", "/profile/:id", h.ProfileHandler.Delete)
 }
 
 func (h *HttpServe) UserRoute(method, path string, f handler.HandlerFnInterface) {

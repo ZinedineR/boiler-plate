@@ -13,14 +13,14 @@
   ],
   "tags": [],
   "paths": {
-    "/api/v2/settings": {
+    "/api/v2/Profile": {
       "get": {
         "tags": [
           "Account Configuration"
         ],
-        "summary": "Get Account Settings",
-        "description": "Get Account Settings",
-        "operationId": "getAccountSettings",
+        "summary": "Get Account Profile",
+        "description": "Get Account Profile",
+        "operationId": "getAccountProfile",
         "responses": {
           "200": {
             "description": "Success",

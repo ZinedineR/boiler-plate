@@ -22,7 +22,7 @@ var HttpCmd = &cobra.Command{
 		// running open telemetry
 		// cleanup := initTracer()
 		// defer cleanup(context.Background())
-		app := api.New(appConf.AppEnvConfig.AppName, baseHandler, settingsHandler)
+		app := api.New(appConf.AppEnvConfig.AppName, baseHandler, ProfileHandler)
 
 		echan := make(chan error)
 		go func() {

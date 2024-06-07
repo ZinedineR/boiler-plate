@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"boiler-plate/internal/base/handler"
-	tempHandler "boiler-plate/internal/settings/handler"
+	tempHandler "boiler-plate/internal/profile/handler"
 	"boiler-plate/pkg/server"
 
 	"github.com/gin-contrib/cors"
@@ -16,17 +16,13 @@ import (
 )
 
 type HttpServe struct {
-	router          *gin.Engine
-	base            *handler.BaseHTTPHandler
-	settingsHandler *tempHandler.HTTPHandler
+	router         *gin.Engine
+	base           *handler.BaseHTTPHandler
+	ProfileHandler *tempHandler.HTTPHandler
 }
 
 func (h *HttpServe) Run(config *appconf.Config) error {
-	h.setupSettingsRouter()
-	h.setupAccountRouter()
-	h.setupRegistrationRouter()
-	h.setupVerifyRouter()
-	h.setupInvestorCategoryRouter()
+	h.setupProfileRouter()
 	h.setupDevRouter(config)
 	h.base.Handlers = h
 
@@ -39,7 +35,7 @@ func (h *HttpServe) Run(config *appconf.Config) error {
 
 func New(
 	appName string, base *handler.BaseHTTPHandler,
-	settings *tempHandler.HTTPHandler,
+	Profile *tempHandler.HTTPHandler,
 ) server.App {
 
 	if os.Getenv("APP_ENV") != "production" {
@@ -71,8 +67,8 @@ func New(
 	}))
 
 	return &HttpServe{
-		router:          r,
-		base:            base,
-		settingsHandler: settings,
+		router:         r,
+		base:           base,
+		ProfileHandler: Profile,
 	}
 }
