@@ -19,4 +19,5 @@ type Service interface {
 		ctx context.Context, id string, profile *domain.Profile,
 	) *exception.Exception
 	Find(ctx context.Context) (*[]domain.Profile, *exception.Exception)
+	Auth(ctx context.Context, profile, password string) (*domain.Profile, *exception.Exception)
 }

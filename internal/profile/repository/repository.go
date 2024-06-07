@@ -80,3 +80,21 @@ func (r Repo) Detail(ctx context.Context, tx *gorm.DB, id int) (*domain.Profile,
 	}
 	return models, nil
 }
+
+func (r Repo) Auth(ctx context.Context, tx *gorm.DB, profile, password string) (*domain.Profile, error) {
+	var (
+		models *domain.Profile
+	)
+
+	if err := tx.WithContext(ctx).
+		Model(&domain.Profile{}).
+		Where("profile = ?", profile).Where("password = ?", password).
+		First(&models).
+		Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return models, nil
+}

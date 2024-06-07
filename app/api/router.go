@@ -34,13 +34,13 @@ func (h *HttpServe) GuestRoute(method, path string, f handler.HandlerFnInterface
 	guestRoute := h.router.Group("/api/v2")
 	switch method {
 	case "GET":
-		guestRoute.GET(path, h.base.GuestRunAction(f))
+		guestRoute.GET(path, AuthMiddle(), h.base.GuestRunAction(f))
 	case "POST":
-		guestRoute.POST(path, h.base.GuestRunAction(f))
+		guestRoute.POST(path, AuthMiddle(), h.base.GuestRunAction(f))
 	case "PUT":
-		guestRoute.PUT(path, h.base.GuestRunAction(f))
+		guestRoute.PUT(path, AuthMiddle(), h.base.GuestRunAction(f))
 	case "DELETE":
-		guestRoute.DELETE(path, h.base.GuestRunAction(f))
+		guestRoute.DELETE(path, AuthMiddle(), h.base.GuestRunAction(f))
 	default:
 		panic(fmt.Sprintf(":%s method not allow", method))
 	}

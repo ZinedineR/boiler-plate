@@ -11,5 +11,6 @@ type ProfileRepository interface {
 	Update(ctx context.Context, tx *gorm.DB, id int, model *domain.Profile) error
 	Find(ctx context.Context, tx *gorm.DB) (*[]domain.Profile, error)
 	Detail(ctx context.Context, tx *gorm.DB, id int) (*domain.Profile, error)
+	Auth(ctx context.Context, tx *gorm.DB, profile, password string) (*domain.Profile, error)
 	Delete(ctx context.Context, tx *gorm.DB, key int) error
 }

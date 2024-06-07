@@ -1,15 +1,14 @@
 package handler
 
 import (
+	ProfileService "boiler-plate/internal/profile/service"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	baseModel "boiler-plate/pkg/db"
 	"boiler-plate/pkg/httpclient"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
@@ -24,11 +23,12 @@ type HandlerFn func(ctx *app.Context) *server.Response
 type HandlerFnInterface func(ctx *app.Context) *server.ResponseInterface
 
 type BaseHTTPHandler struct {
-	Handlers   interface{}
-	DB         *gorm.DB
-	AppConfig  *appconf.Config
-	BaseModel  *baseModel.SQLClientRepository
-	HttpClient httpclient.Client
+	Handlers       interface{}
+	DB             *gorm.DB
+	AppConfig      *appconf.Config
+	BaseModel      *baseModel.SQLClientRepository
+	HttpClient     httpclient.Client
+	ProfileService ProfileService.Service
 }
 
 func NewBaseHTTPHandler(
@@ -373,41 +373,6 @@ func (b BaseHTTPHandler) UserRunAction(handler HandlerFnInterface) gin.HandlerFu
 				})
 			}
 		}()
-
-		// Extract bearer token from request header
-		tokenString := strings.Split(ctx.GetHeader("Authorization"), " ")[1:]
-		if len(tokenString) == 0 {
-			logrus.Errorln(fmt.Sprintf("REQUEST ID: %s , message: Unauthorized", ctx.APIReqID))
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"status":  http.StatusUnauthorized,
-				"message": "request does not contain an access token",
-			})
-			return
-		}
-		authToken := tokenString[0]
-
-		// Validate token
-		token, err := jwt.ParseWithClaims(authToken, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-			}
-
-			return b.AppConfig.AuthConfig.JwtSecretAccessToken, nil
-		})
-		if err != nil || !token.Valid {
-			logrus.Errorln(fmt.Sprintf("REQUEST ID: %s , message: Unauthorized", ctx.APIReqID))
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"status":  http.StatusUnauthorized,
-				"message": "unauthorized",
-			})
-			return
-		}
-
-		// Get user data from token
-		claims := token.Claims.(jwt.MapClaims)
-		ctx.Set("sub", claims["sub"])
-		ctx.Set("role_id", claims["role_id"])
-		ctx.Set("email", claims["email"])
 
 		// Execute handler
 		resp := handler(ctx)

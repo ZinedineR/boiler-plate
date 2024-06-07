@@ -105,3 +105,16 @@ func (s service) Detail(ctx context.Context, id string) (*domain.Profile, *excep
 	}
 	return result, nil
 }
+
+func (s service) Auth(ctx context.Context, profile, password string) (*domain.Profile, *exception.Exception) {
+	tx := s.DB.Begin()
+	defer tx.Rollback()
+	result, err := s.ProfileRepo.Auth(ctx, tx, profile, password)
+	if err != nil {
+		return nil, exception.Internal("error deleting profile", err)
+	}
+	if err := tx.Commit().Error; err != nil {
+		return nil, exception.Internal("commit transaction", err)
+	}
+	return result, nil
+}
