@@ -4,7 +4,7 @@ import (
 	"boiler-plate/internal/base/app"
 	"boiler-plate/internal/base/handler"
 	"boiler-plate/internal/profile/domain"
-	ProfileService "boiler-plate/internal/profile/service"
+	"boiler-plate/internal/profile/service"
 	"boiler-plate/pkg/exception"
 	"boiler-plate/pkg/httputils"
 	"boiler-plate/pkg/server"
@@ -13,11 +13,11 @@ import (
 
 type HTTPHandler struct {
 	App            *handler.BaseHTTPHandler
-	ProfileService ProfileService.Service
+	ProfileService service.Service
 }
 
 func NewHTTPHandler(
-	handler *handler.BaseHTTPHandler, ProfileService ProfileService.Service,
+	handler *handler.BaseHTTPHandler, ProfileService service.Service,
 ) *HTTPHandler {
 	return &HTTPHandler{
 		App:            handler,

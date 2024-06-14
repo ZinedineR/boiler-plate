@@ -1,7 +1,6 @@
 package handler
 
 import (
-	ProfileService "boiler-plate/internal/profile/service"
 	"fmt"
 	"net/http"
 	"time"
@@ -23,12 +22,11 @@ type HandlerFn func(ctx *app.Context) *server.Response
 type HandlerFnInterface func(ctx *app.Context) *server.ResponseInterface
 
 type BaseHTTPHandler struct {
-	Handlers       interface{}
-	DB             *gorm.DB
-	AppConfig      *appconf.Config
-	BaseModel      *baseModel.SQLClientRepository
-	HttpClient     httpclient.Client
-	ProfileService ProfileService.Service
+	Handlers   interface{}
+	DB         *gorm.DB
+	AppConfig  *appconf.Config
+	BaseModel  *baseModel.SQLClientRepository
+	HttpClient httpclient.Client
 }
 
 func NewBaseHTTPHandler(

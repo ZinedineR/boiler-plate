@@ -32,7 +32,7 @@ func (s service) Create(
 	defer tx.Rollback()
 	err := s.ProfileRepo.Create(ctx, tx, req)
 	if err != nil {
-		exception.Internal("error inserting profile", err)
+		return exception.Internal("error inserting profile", err)
 	}
 	if err := tx.Commit().Error; err != nil {
 		return exception.Internal("commit transaction", err)
