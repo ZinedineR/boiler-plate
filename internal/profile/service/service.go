@@ -30,6 +30,9 @@ func (s service) Create(
 ) *exception.Exception {
 	tx := s.DB.Begin()
 	defer tx.Rollback()
+	if err := s.validate.Struct(req); err != nil {
+		return exception.InvalidArgument(err)
+	}
 	err := s.ProfileRepo.Create(ctx, tx, req)
 	if err != nil {
 		return exception.Internal("error inserting profile", err)
@@ -45,6 +48,9 @@ func (s service) Update(
 ) *exception.Exception {
 	tx := s.DB.Begin()
 	defer tx.Rollback()
+	if err := s.validate.Struct(profile); err != nil {
+		return exception.InvalidArgument(err)
+	}
 	idInt, err := strconv.Atoi(id)
 	if err != nil {
 		return exception.PermissionDenied("Input of id must be integer")

@@ -11,7 +11,7 @@ const (
 
 type Profile struct {
 	ID        int        `gorm:"primaryKey;not null;autoIncrement" json:"id"`
-	Profile   string     `json:"profile,omitempty"`
+	Profile   string     `validate:"required,gt=2" json:"profile,omitempty"`
 	Password  string     `json:"password,omitempty"`
 	CreatedAt *time.Time `json:"created_at"`
 }
