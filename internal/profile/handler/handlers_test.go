@@ -287,7 +287,6 @@ func TestUpdateHandler(t *testing.T) {
 
 func TestDeleteHandler(t *testing.T) {
 	// Setup router
-
 	errService := exception.Internal("error deleting profile", errors.New("service error"))
 
 	t.Run("Positive Case", func(t *testing.T) {
