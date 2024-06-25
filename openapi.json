@@ -13,14 +13,14 @@
   ],
   "tags": [],
   "paths": {
-    "/api/v2/Profile": {
+    "/api/v2/Users": {
       "get": {
         "tags": [
           "Account Configuration"
         ],
-        "summary": "Get Account Profile",
-        "description": "Get Account Profile",
-        "operationId": "getAccountProfile",
+        "summary": "Get Account Users",
+        "description": "Get Account Users",
+        "operationId": "getAccountUsers",
         "responses": {
           "200": {
             "description": "Success",
@@ -109,7 +109,7 @@
                       "type": "number",
                       "example": 8
                     },
-                    "reminder_tax_profile_expired": {
+                    "reminder_tax_users_expired": {
                       "type": "number",
                       "example": 3
                     },
@@ -178,7 +178,7 @@
                       "type": "string",
                       "example": "USD"
                     },
-                    "reminder_tax_profile_expired": {
+                    "reminder_tax_users_expired": {
                       "type": "number",
                       "example": 3
                     },
@@ -230,7 +230,7 @@
                     "type": "string",
                     "example": "USD"
                   },
-                  "reminder_tax_profile_expired": {
+                  "reminder_tax_users_expired": {
                     "type": "number",
                     "example": 3
                   },
@@ -243,7 +243,7 @@
                     "example": 5
                   }
                 },
-                "required": ["account_expired_period", "currency", "reminder_tax_profile_expired", "tax_fee", "valid_account_expired"]
+                "required": ["account_expired_period", "currency", "reminder_tax_users_expired", "tax_fee", "valid_account_expired"]
               }
             }
           }
@@ -276,7 +276,7 @@
                       "type": "string",
                       "example": "USD"
                     },
-                    "reminder_tax_profile_expired": {
+                    "reminder_tax_users_expired": {
                       "type": "number",
                       "example": 3
                     },

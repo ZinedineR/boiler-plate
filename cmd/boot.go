@@ -8,10 +8,12 @@ import (
 	"os"
 
 	appConfiguration "boiler-plate/app/appconf"
-
-	tempHandler "boiler-plate/internal/profile/handler"
-	ProfileRepo "boiler-plate/internal/profile/repository"
-	ProfileService "boiler-plate/internal/profile/service"
+	subHandler "boiler-plate/internal/submissions/handler"
+	SubmissionsRepo "boiler-plate/internal/submissions/repository"
+	SubmissionsService "boiler-plate/internal/submissions/service"
+	tempHandler "boiler-plate/internal/users/handler"
+	UsersRepo "boiler-plate/internal/users/repository"
+	UsersService "boiler-plate/internal/users/service"
 	"boiler-plate/pkg/db"
 	"boiler-plate/pkg/httpclient"
 	"boiler-plate/pkg/migration"
@@ -24,14 +26,14 @@ import (
 )
 
 var (
-	appConf        *appConfiguration.Config
-	baseHandler    *handler.BaseHTTPHandler
-	ProfileHandler *tempHandler.HTTPHandler
-
-	sqlClientRepo *db.SQLClientRepository
-	validate      *validator.Validate
-	httpClient    httpclient.Client
-	xvalidate     *xvalidator.Validator
+	appConf            *appConfiguration.Config
+	baseHandler        *handler.BaseHTTPHandler
+	UsersHandler       *tempHandler.HTTPHandler
+	SubmissionsHandler *subHandler.HTTPHandler
+	sqlClientRepo      *db.SQLClientRepository
+	validate           *validator.Validate
+	httpClient         httpclient.Client
+	xvalidate          *xvalidator.Validator
 )
 
 func initHttpclient() {
@@ -48,9 +50,13 @@ func initHTTP() {
 
 	baseHandler = handler.NewBaseHTTPHandler(sqlClientRepo.DB, appConf, sqlClientRepo, httpClient)
 
-	ProfileRepo := ProfileRepo.NewRepository(sqlClientRepo.DB, sqlClientRepo)
-	ProfileService := ProfileService.NewService(appConf, ProfileRepo, sqlClientRepo.DB, validate)
-	ProfileHandler = tempHandler.NewHTTPHandler(baseHandler, ProfileService)
+	UsersRepo := UsersRepo.NewRepository(sqlClientRepo.DB, sqlClientRepo)
+	SubsRepo := SubmissionsRepo.NewRepository(sqlClientRepo.DB, sqlClientRepo)
+
+	UsersService := UsersService.NewService(appConf, UsersRepo, SubsRepo, sqlClientRepo.DB, validate)
+	SubsService := SubmissionsService.NewService(appConf, SubsRepo, sqlClientRepo.DB, validate)
+	UsersHandler = tempHandler.NewHTTPHandler(baseHandler, UsersService)
+	SubmissionsHandler = subHandler.NewHTTPHandler(baseHandler, SubsService)
 
 }
 

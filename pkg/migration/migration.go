@@ -1,7 +1,8 @@
 package migration
 
 import (
-	"boiler-plate/internal/profile/domain"
+	submissionDomain "boiler-plate/internal/submissions/domain"
+	"boiler-plate/internal/users/domain"
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -19,9 +20,12 @@ func Initmigrate(db *gorm.DB) {
 
 	// Migrate rest of the models
 	logrus.Println(fmt.Println("AutoMigrate Model [table_name]"))
-	db.AutoMigrate(&domain.Profile{})
+	db.AutoMigrate(&domain.Users{})
 	logrus.Infoln(fmt.Println("  TableModel [" +
-		(&domain.Profile{}).TableName() + "]"))
+		(&domain.Users{}).TableName() + "]"))
+	db.AutoMigrate(&submissionDomain.Submissions{})
+	logrus.Infoln(fmt.Println("  TableModel [" +
+		(&submissionDomain.Submissions{}).TableName() + "]"))
 }
 
 func executePendingMigrations(db *gorm.DB) {

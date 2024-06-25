@@ -1,35 +1,21 @@
 package db
 
 import (
-	"boiler-plate/pkg/getfilter"
 	"gorm.io/gorm"
 	"math"
 )
 
 type Paginate struct {
-	Limit      int    `json:"limit,omitempty"`
-	Page       int    `json:"page,omitempty"`
-	Sort       string `json:"sort"`
-	Order      string `json:"order"`
-	TotalRows  int    `json:"total_rows,omitempty"`
-	TotalPages int    `json:"total_pages,omitempty"`
+	Limit      int `json:"limit,omitempty"`
+	Page       int `json:"page,omitempty"`
+	TotalRows  int `json:"total_rows,omitempty"`
+	TotalPages int `json:"total_pages,omitempty"`
 }
 
-func NewPaginate(limit, page int, arrSort []getfilter.FilterSort) *Paginate {
-	var sort, order string
-	for _, filter := range arrSort {
-		sort = sort + filter.Field + ","
-		order = order + filter.Value + ","
-	}
+func NewPaginate(limit, page int) *Paginate {
 	return &Paginate{
 		Limit: limit, Page: page,
-		Sort: sort, Order: order,
 	}
-}
-
-func (p *Paginate) ApplySorting(sort, order string) {
-	p.Sort = sort
-	p.Order = order
 }
 
 func (p *Paginate) PaginatedResult(value interface{}, db *gorm.DB) func(db *gorm.DB) *gorm.DB {

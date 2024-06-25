@@ -23,7 +23,7 @@ func NewMongoDBRepository(host, uname, pass string, port int) (
 	//dsn = fmt.Sprintf(os.Getenv("MONGODB_URL"))
 	clientOptions := options.Client().ApplyURI(os.Getenv("MONGODB_URL"))
 	client, err := mongo.Connect(context.Background(), clientOptions)
-	Profile := client.Database(os.Getenv("MONGODB_DB"))
+	Users := client.Database(os.Getenv("MONGODB_DB"))
 	if err != nil {
 		logrus.Error(fmt.Sprintf("Cannot connect to MongoDB. %v", err))
 		return nil, errors.Wrap(err, "Cannot connect to MongoDB")
@@ -34,7 +34,7 @@ func NewMongoDBRepository(host, uname, pass string, port int) (
 		logrus.Error(fmt.Sprintf("Cannot send/receive data with MongoDB. %v", err))
 		return nil, errors.Wrap(err, "Cannot send/receive data with MongoDB")
 	}
-	return &MongoDBClientRepository{Client: client, DB: Profile}, nil
+	return &MongoDBClientRepository{Client: client, DB: Users}, nil
 }
 
 type MongoPaginate struct {

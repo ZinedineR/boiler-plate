@@ -2,9 +2,9 @@ package handler_test
 
 import (
 	"boiler-plate/internal/base/handler"
-	"boiler-plate/internal/profile/domain"
-	handler2 "boiler-plate/internal/profile/handler"
-	"boiler-plate/internal/profile/mocks"
+	"boiler-plate/internal/users/domain"
+	handler2 "boiler-plate/internal/users/handler"
+	"boiler-plate/internal/users/mocks"
 	"boiler-plate/pkg/exception"
 	"bytes"
 	"encoding/json"
@@ -21,30 +21,30 @@ import (
 func TestPostHandler(t *testing.T) {
 	// Setup router
 
-	errService := exception.Internal("error inserting profile", errors.New("service error"))
+	errService := exception.Internal("error inserting users", errors.New("service error"))
 
 	t.Run("Positive Case", func(t *testing.T) {
 		t.Parallel()
-		// Mock GORM DB and ProfileService
+		// Mock GORM DB and UsersService
 		r := gin.Default()
 		dbMock, _ := gorm.Open(nil, nil)
-		mockProfileService := new(mocks.ProfileService)
+		mockUsersService := new(mocks.Service)
 		mockBaseHTTPHandler := handler.NewBaseHTTPHandler(dbMock, nil, nil, nil)
 		httpHandler := handler2.HTTPHandler{
-			App:            mockBaseHTTPHandler,
-			ProfileService: mockProfileService,
+			App:          mockBaseHTTPHandler,
+			UsersService: mockUsersService,
 		}
 
-		r.POST("/profile", mockBaseHTTPHandler.GuestRunAction(httpHandler.Create))
+		r.POST("/users", mockBaseHTTPHandler.GuestRunAction(httpHandler.Create))
 		// Prepare request data
-		requestBody := &domain.Profile{
-			Profile:  "test_profile",
+		requestBody := &domain.Users{
+			Email:    "test_users",
 			Password: "test_password",
 		}
 		requestBodyBytes, _ := json.Marshal(requestBody)
 
 		// Create HTTP POST request
-		req, _ := http.NewRequest("POST", "/profile", bytes.NewBuffer(requestBodyBytes))
+		req, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(requestBodyBytes))
 		req.Header.Set("Content-Type", "application/json")
 
 		// Create gin context
@@ -53,7 +53,7 @@ func TestPostHandler(t *testing.T) {
 		ginCtx.Request = req
 
 		// Set up the expectation on the mock service
-		mockProfileService.On("Create", mock.Anything, requestBody).Return(nil)
+		mockUsersService.On("Create", mock.Anything, requestBody).Return(nil)
 
 		// Perform request
 		r.ServeHTTP(w, req)
@@ -62,34 +62,34 @@ func TestPostHandler(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 
 		// Check response body
-		expectedBody := `{"status_code": 200, "message": "success created", "data": {"id" :0, "profile": "test_profile", "password": "test_password", "created_at": null}}`
+		expectedBody := `{"status_code": 200, "message": "success created", "data": {"id" :0, "users": "test_users", "password": "test_password", "created_at": null}}`
 		assert.JSONEq(t, expectedBody, w.Body.String())
 
 		// Assert that the mock was called with the expected parameters
-		mockProfileService.AssertCalled(t, "Create", mock.Anything, requestBody)
+		mockUsersService.AssertCalled(t, "Create", mock.Anything, requestBody)
 	})
 	t.Run("Error service", func(t *testing.T) {
 		t.Parallel()
-		// Mock GORM DB and ProfileService
+		// Mock GORM DB and UsersService
 		r := gin.Default()
 		dbMock, _ := gorm.Open(nil, nil)
-		mockProfileService := new(mocks.ProfileService)
+		mockUsersService := new(mocks.Service)
 		mockBaseHTTPHandler := handler.NewBaseHTTPHandler(dbMock, nil, nil, nil)
 		httpHandler := handler2.HTTPHandler{
-			App:            mockBaseHTTPHandler,
-			ProfileService: mockProfileService,
+			App:          mockBaseHTTPHandler,
+			UsersService: mockUsersService,
 		}
 
-		r.POST("/profile", mockBaseHTTPHandler.GuestRunAction(httpHandler.Create))
+		r.POST("/users", mockBaseHTTPHandler.GuestRunAction(httpHandler.Create))
 		// Prepare request data
-		requestBody := &domain.Profile{
-			Profile:  "test_profile",
+		requestBody := &domain.Users{
+			Email:    "test_users",
 			Password: "test_password",
 		}
 		requestBodyBytes, _ := json.Marshal(requestBody)
 
 		// Create HTTP POST request
-		req, _ := http.NewRequest("POST", "/profile", bytes.NewBuffer(requestBodyBytes))
+		req, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(requestBodyBytes))
 		req.Header.Set("Content-Type", "application/json")
 
 		// Create gin context
@@ -98,7 +98,7 @@ func TestPostHandler(t *testing.T) {
 		ginCtx.Request = req
 
 		// Set up the expectation on the mock service
-		mockProfileService.On("Create", mock.Anything, requestBody).Return(errService)
+		mockUsersService.On("Create", mock.Anything, requestBody).Return(errService)
 
 		// Perform request
 		r.ServeHTTP(w, req)
@@ -107,31 +107,31 @@ func TestPostHandler(t *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 
 		// Check response body
-		expectedBody := `{"status_code": 500, "message": "error inserting profile", "error": "service error"}`
+		expectedBody := `{"status_code": 500, "message": "error inserting users", "error": "service error"}`
 		assert.JSONEq(t, expectedBody, w.Body.String())
 
 		// Assert that the mock was called with the expected parameters
-		mockProfileService.AssertCalled(t, "Create", mock.Anything, requestBody)
+		mockUsersService.AssertCalled(t, "Create", mock.Anything, requestBody)
 	})
 	t.Run("Error binding json", func(t *testing.T) {
 		t.Parallel()
-		// Mock GORM DB and ProfileService
+		// Mock GORM DB and UsersService
 		r := gin.Default()
 		dbMock, _ := gorm.Open(nil, nil)
-		mockProfileService := new(mocks.ProfileService)
+		mockUsersService := new(mocks.Service)
 		mockBaseHTTPHandler := handler.NewBaseHTTPHandler(dbMock, nil, nil, nil)
 		httpHandler := handler2.HTTPHandler{
-			App:            mockBaseHTTPHandler,
-			ProfileService: mockProfileService,
+			App:          mockBaseHTTPHandler,
+			UsersService: mockUsersService,
 		}
 
-		r.POST("/profile", mockBaseHTTPHandler.GuestRunAction(httpHandler.Create))
+		r.POST("/users", mockBaseHTTPHandler.GuestRunAction(httpHandler.Create))
 		// Prepare request data
-		malformedJSON := `{"profile": 1, "password": "test_password"`
+		malformedJSON := `{"users": 1, "password": "test_password"`
 		requestBodyBytes, _ := json.Marshal(malformedJSON)
 
 		// Create HTTP POST request
-		req, _ := http.NewRequest("POST", "/profile", bytes.NewBuffer(requestBodyBytes))
+		req, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(requestBodyBytes))
 		req.Header.Set("Content-Type", "application/json")
 
 		// Create gin context
@@ -155,30 +155,30 @@ func TestPostHandler(t *testing.T) {
 func TestUpdateHandler(t *testing.T) {
 	// Setup router
 
-	errService := exception.Internal("error updating profile", errors.New("service error"))
+	errService := exception.Internal("error updating users", errors.New("service error"))
 
 	t.Run("Positive Case", func(t *testing.T) {
 		t.Parallel()
-		// Mock GORM DB and ProfileService
+		// Mock GORM DB and UsersService
 		r := gin.Default()
 		dbMock, _ := gorm.Open(nil, nil)
-		mockProfileService := new(mocks.ProfileService)
+		mockUsersService := new(mocks.Service)
 		mockBaseHTTPHandler := handler.NewBaseHTTPHandler(dbMock, nil, nil, nil)
 		httpHandler := handler2.HTTPHandler{
-			App:            mockBaseHTTPHandler,
-			ProfileService: mockProfileService,
+			App:          mockBaseHTTPHandler,
+			UsersService: mockUsersService,
 		}
 
-		r.PUT("/profile/:id", mockBaseHTTPHandler.GuestRunAction(httpHandler.Update))
+		r.PUT("/users/:id", mockBaseHTTPHandler.GuestRunAction(httpHandler.Update))
 		// Prepare request data
-		requestBody := &domain.Profile{
-			Profile:  "updated_profile",
+		requestBody := &domain.Users{
+			Email:    "updated_users",
 			Password: "updated_password",
 		}
 		requestBodyBytes, _ := json.Marshal(requestBody)
 
 		// Create HTTP PUT request
-		req, _ := http.NewRequest("PUT", "/profile/1", bytes.NewBuffer(requestBodyBytes))
+		req, _ := http.NewRequest("PUT", "/users/1", bytes.NewBuffer(requestBodyBytes))
 		req.Header.Set("Content-Type", "application/json")
 
 		// Create gin context
@@ -187,7 +187,7 @@ func TestUpdateHandler(t *testing.T) {
 		ginCtx.Request = req
 
 		// Set up the expectation on the mock service
-		mockProfileService.On("Update", mock.Anything, "1", requestBody).Return(nil)
+		mockUsersService.On("Update", mock.Anything, "1", requestBody).Return(nil)
 
 		// Perform request
 		r.ServeHTTP(w, req)
@@ -196,34 +196,34 @@ func TestUpdateHandler(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 
 		// Check response body
-		expectedBody := `{"status_code": 200, "message": "success update", "data": {"id" :0, "profile": "updated_profile", "password": "updated_password", "created_at": null}}`
+		expectedBody := `{"status_code": 200, "message": "success update", "data": {"id" :0, "users": "updated_users", "password": "updated_password", "created_at": null}}`
 		assert.JSONEq(t, expectedBody, w.Body.String())
 
 		// Assert that the mock was called with the expected parameters
-		mockProfileService.AssertCalled(t, "Update", mock.Anything, "1", requestBody)
+		mockUsersService.AssertCalled(t, "Update", mock.Anything, "1", requestBody)
 	})
 	t.Run("Error service", func(t *testing.T) {
 		t.Parallel()
-		// Mock GORM DB and ProfileService
+		// Mock GORM DB and UsersService
 		r := gin.Default()
 		dbMock, _ := gorm.Open(nil, nil)
-		mockProfileService := new(mocks.ProfileService)
+		mockUsersService := new(mocks.Service)
 		mockBaseHTTPHandler := handler.NewBaseHTTPHandler(dbMock, nil, nil, nil)
 		httpHandler := handler2.HTTPHandler{
-			App:            mockBaseHTTPHandler,
-			ProfileService: mockProfileService,
+			App:          mockBaseHTTPHandler,
+			UsersService: mockUsersService,
 		}
 
-		r.PUT("/profile/:id", mockBaseHTTPHandler.GuestRunAction(httpHandler.Update))
+		r.PUT("/users/:id", mockBaseHTTPHandler.GuestRunAction(httpHandler.Update))
 		// Prepare request data
-		requestBody := &domain.Profile{
-			Profile:  "updated_profile",
+		requestBody := &domain.Users{
+			Email:    "updated_users",
 			Password: "updated_password",
 		}
 		requestBodyBytes, _ := json.Marshal(requestBody)
 
 		// Create HTTP PUT request
-		req, _ := http.NewRequest("PUT", "/profile/1", bytes.NewBuffer(requestBodyBytes))
+		req, _ := http.NewRequest("PUT", "/users/1", bytes.NewBuffer(requestBodyBytes))
 		req.Header.Set("Content-Type", "application/json")
 
 		// Create gin context
@@ -232,7 +232,7 @@ func TestUpdateHandler(t *testing.T) {
 		ginCtx.Request = req
 
 		// Set up the expectation on the mock service
-		mockProfileService.On("Update", mock.Anything, "1", requestBody).Return(errService)
+		mockUsersService.On("Update", mock.Anything, "1", requestBody).Return(errService)
 
 		// Perform request
 		r.ServeHTTP(w, req)
@@ -241,31 +241,31 @@ func TestUpdateHandler(t *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 
 		// Check response body
-		expectedBody := `{"status_code": 500, "message": "error updating profile", "error": "service error"}`
+		expectedBody := `{"status_code": 500, "message": "error updating users", "error": "service error"}`
 		assert.JSONEq(t, expectedBody, w.Body.String())
 
 		// Assert that the mock was called with the expected parameters
-		mockProfileService.AssertCalled(t, "Update", mock.Anything, "1", requestBody)
+		mockUsersService.AssertCalled(t, "Update", mock.Anything, "1", requestBody)
 	})
 	t.Run("Error binding json", func(t *testing.T) {
 		t.Parallel()
-		// Mock GORM DB and ProfileService
+		// Mock GORM DB and UsersService
 		r := gin.Default()
 		dbMock, _ := gorm.Open(nil, nil)
-		mockProfileService := new(mocks.ProfileService)
+		mockUsersService := new(mocks.Service)
 		mockBaseHTTPHandler := handler.NewBaseHTTPHandler(dbMock, nil, nil, nil)
 		httpHandler := handler2.HTTPHandler{
-			App:            mockBaseHTTPHandler,
-			ProfileService: mockProfileService,
+			App:          mockBaseHTTPHandler,
+			UsersService: mockUsersService,
 		}
 
-		r.PUT("/profile/:id", mockBaseHTTPHandler.GuestRunAction(httpHandler.Update))
+		r.PUT("/users/:id", mockBaseHTTPHandler.GuestRunAction(httpHandler.Update))
 		// Prepare request data
-		malformedJSON := `{"profile": 1, "password": "updated_password"`
+		malformedJSON := `{"users": 1, "password": "updated_password"`
 		requestBodyBytes, _ := json.Marshal(malformedJSON)
 
 		// Create HTTP PUT request
-		req, _ := http.NewRequest("PUT", "/profile/1", bytes.NewBuffer(requestBodyBytes))
+		req, _ := http.NewRequest("PUT", "/users/1", bytes.NewBuffer(requestBodyBytes))
 		req.Header.Set("Content-Type", "application/json")
 
 		// Create gin context
@@ -287,24 +287,24 @@ func TestUpdateHandler(t *testing.T) {
 
 func TestDeleteHandler(t *testing.T) {
 	// Setup router
-	errService := exception.Internal("error deleting profile", errors.New("service error"))
+	errService := exception.Internal("error deleting users", errors.New("service error"))
 
 	t.Run("Positive Case", func(t *testing.T) {
 		t.Parallel()
-		// Mock GORM DB and ProfileService
+		// Mock GORM DB and UsersService
 		r := gin.Default()
 		dbMock, _ := gorm.Open(nil, nil)
-		mockProfileService := new(mocks.ProfileService)
+		mockUsersService := new(mocks.Service)
 		mockBaseHTTPHandler := handler.NewBaseHTTPHandler(dbMock, nil, nil, nil)
 		httpHandler := handler2.HTTPHandler{
-			App:            mockBaseHTTPHandler,
-			ProfileService: mockProfileService,
+			App:          mockBaseHTTPHandler,
+			UsersService: mockUsersService,
 		}
 
-		r.DELETE("/profile/:id", mockBaseHTTPHandler.GuestRunAction(httpHandler.Delete))
+		r.DELETE("/users/:id", mockBaseHTTPHandler.GuestRunAction(httpHandler.Delete))
 
 		// Create HTTP DELETE request
-		req, _ := http.NewRequest("DELETE", "/profile/1", nil)
+		req, _ := http.NewRequest("DELETE", "/users/1", nil)
 		req.Header.Set("Content-Type", "application/json")
 
 		// Create gin context
@@ -313,7 +313,7 @@ func TestDeleteHandler(t *testing.T) {
 		ginCtx.Request = req
 
 		// Set up the expectation on the mock service
-		mockProfileService.On("Delete", mock.Anything, "1").Return(nil)
+		mockUsersService.On("Delete", mock.Anything, "1").Return(nil)
 
 		// Perform request
 		r.ServeHTTP(w, req)
@@ -326,24 +326,24 @@ func TestDeleteHandler(t *testing.T) {
 		assert.JSONEq(t, expectedBody, w.Body.String())
 
 		// Assert that the mock was called with the expected parameters
-		mockProfileService.AssertCalled(t, "Delete", mock.Anything, "1")
+		mockUsersService.AssertCalled(t, "Delete", mock.Anything, "1")
 	})
 	t.Run("Error service", func(t *testing.T) {
 		t.Parallel()
-		// Mock GORM DB and ProfileService
+		// Mock GORM DB and UsersService
 		r := gin.Default()
 		dbMock, _ := gorm.Open(nil, nil)
-		mockProfileService := new(mocks.ProfileService)
+		mockUsersService := new(mocks.Service)
 		mockBaseHTTPHandler := handler.NewBaseHTTPHandler(dbMock, nil, nil, nil)
 		httpHandler := handler2.HTTPHandler{
-			App:            mockBaseHTTPHandler,
-			ProfileService: mockProfileService,
+			App:          mockBaseHTTPHandler,
+			UsersService: mockUsersService,
 		}
 
-		r.DELETE("/profile/:id", mockBaseHTTPHandler.GuestRunAction(httpHandler.Delete))
+		r.DELETE("/users/:id", mockBaseHTTPHandler.GuestRunAction(httpHandler.Delete))
 
 		// Create HTTP DELETE request
-		req, _ := http.NewRequest("DELETE", "/profile/1", nil)
+		req, _ := http.NewRequest("DELETE", "/users/1", nil)
 		req.Header.Set("Content-Type", "application/json")
 
 		// Create gin context
@@ -352,7 +352,7 @@ func TestDeleteHandler(t *testing.T) {
 		ginCtx.Request = req
 
 		// Set up the expectation on the mock service
-		mockProfileService.On("Delete", mock.Anything, "1").Return(errService)
+		mockUsersService.On("Delete", mock.Anything, "1").Return(errService)
 
 		// Perform request
 		r.ServeHTTP(w, req)
@@ -361,43 +361,43 @@ func TestDeleteHandler(t *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 
 		// Check response body
-		expectedBody := `{"status_code": 500, "message": "error deleting profile", "error": "service error"}`
+		expectedBody := `{"status_code": 500, "message": "error deleting users", "error": "service error"}`
 		assert.JSONEq(t, expectedBody, w.Body.String())
 
 		// Assert that the mock was called with the expected parameters
-		mockProfileService.AssertCalled(t, "Delete", mock.Anything, "1")
+		mockUsersService.AssertCalled(t, "Delete", mock.Anything, "1")
 	})
 }
 
 func TestDetailHandler(t *testing.T) {
 	// Setup router
 
-	errService := exception.Internal("error fetching profile detail", errors.New("service error"))
+	errService := exception.Internal("error fetching users detail", errors.New("service error"))
 
 	t.Run("Positive Case", func(t *testing.T) {
 		t.Parallel()
-		// Mock GORM DB and ProfileService
+		// Mock GORM DB and UsersService
 		r := gin.Default()
 		dbMock, _ := gorm.Open(nil, nil)
-		mockProfileService := new(mocks.ProfileService)
+		mockUsersService := new(mocks.Service)
 		mockBaseHTTPHandler := handler.NewBaseHTTPHandler(dbMock, nil, nil, nil)
 		httpHandler := handler2.HTTPHandler{
-			App:            mockBaseHTTPHandler,
-			ProfileService: mockProfileService,
+			App:          mockBaseHTTPHandler,
+			UsersService: mockUsersService,
 		}
 
-		r.GET("/profile/:id", mockBaseHTTPHandler.GuestRunAction(httpHandler.Detail))
+		r.GET("/users/:id", mockBaseHTTPHandler.GuestRunAction(httpHandler.Detail))
 
 		// Prepare mock response data
-		profile := &domain.Profile{
+		users := &domain.Users{
 			ID:        1,
-			Profile:   "test_profile",
+			Email:     "test_users",
 			Password:  "test_password",
 			CreatedAt: nil,
 		}
 
 		// Create HTTP GET request
-		req, _ := http.NewRequest("GET", "/profile/1", nil)
+		req, _ := http.NewRequest("GET", "/users/1", nil)
 		req.Header.Set("Content-Type", "application/json")
 
 		// Create gin context
@@ -406,7 +406,7 @@ func TestDetailHandler(t *testing.T) {
 		ginCtx.Request = req
 
 		// Set up the expectation on the mock service
-		mockProfileService.On("Detail", mock.Anything, "1").Return(profile, nil)
+		mockUsersService.On("Detail", mock.Anything, "1").Return(users, nil)
 
 		// Perform request
 		r.ServeHTTP(w, req)
@@ -415,28 +415,28 @@ func TestDetailHandler(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 
 		// Check response body
-		expectedBody := `{"status_code": 200, "message": "success", "data": {"id": 1, "profile": "test_profile", "password": "test_password", "created_at": null}}`
+		expectedBody := `{"status_code": 200, "message": "success", "data": {"id": 1, "users": "test_users", "password": "test_password", "created_at": null}}`
 		assert.JSONEq(t, expectedBody, w.Body.String())
 
 		// Assert that the mock was called with the expected parameters
-		mockProfileService.AssertCalled(t, "Detail", mock.Anything, "1")
+		mockUsersService.AssertCalled(t, "Detail", mock.Anything, "1")
 	})
 	t.Run("Error service", func(t *testing.T) {
 		t.Parallel()
-		// Mock GORM DB and ProfileService
+		// Mock GORM DB and UsersService
 		r := gin.Default()
 		dbMock, _ := gorm.Open(nil, nil)
-		mockProfileService := new(mocks.ProfileService)
+		mockUsersService := new(mocks.Service)
 		mockBaseHTTPHandler := handler.NewBaseHTTPHandler(dbMock, nil, nil, nil)
 		httpHandler := handler2.HTTPHandler{
-			App:            mockBaseHTTPHandler,
-			ProfileService: mockProfileService,
+			App:          mockBaseHTTPHandler,
+			UsersService: mockUsersService,
 		}
 
-		r.GET("/profile/:id", mockBaseHTTPHandler.GuestRunAction(httpHandler.Detail))
+		r.GET("/users/:id", mockBaseHTTPHandler.GuestRunAction(httpHandler.Detail))
 
 		// Create HTTP GET request
-		req, _ := http.NewRequest("GET", "/profile/1", nil)
+		req, _ := http.NewRequest("GET", "/users/1", nil)
 		req.Header.Set("Content-Type", "application/json")
 
 		// Create gin context
@@ -445,7 +445,7 @@ func TestDetailHandler(t *testing.T) {
 		ginCtx.Request = req
 
 		// Set up the expectation on the mock service
-		mockProfileService.On("Detail", mock.Anything, "1").Return(nil, errService)
+		mockUsersService.On("Detail", mock.Anything, "1").Return(nil, errService)
 
 		// Perform request
 		r.ServeHTTP(w, req)
@@ -454,51 +454,51 @@ func TestDetailHandler(t *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 
 		// Check response body
-		expectedBody := `{"status_code": 500, "message": "error fetching profile detail", "error": "service error"}`
+		expectedBody := `{"status_code": 500, "message": "error fetching users detail", "error": "service error"}`
 		assert.JSONEq(t, expectedBody, w.Body.String())
 
 		// Assert that the mock was called with the expected parameters
-		mockProfileService.AssertCalled(t, "Detail", mock.Anything, "1")
+		mockUsersService.AssertCalled(t, "Detail", mock.Anything, "1")
 	})
 }
 
 func TestFindHandler(t *testing.T) {
 	// Setup router
 
-	errService := exception.Internal("error fetching profiles", errors.New("service error"))
+	errService := exception.Internal("error fetching userss", errors.New("service error"))
 
 	t.Run("Positive Case", func(t *testing.T) {
 		t.Parallel()
-		// Mock GORM DB and ProfileService
+		// Mock GORM DB and UsersService
 		r := gin.Default()
 		dbMock, _ := gorm.Open(nil, nil)
-		mockProfileService := new(mocks.ProfileService)
+		mockUsersService := new(mocks.Service)
 		mockBaseHTTPHandler := handler.NewBaseHTTPHandler(dbMock, nil, nil, nil)
 		httpHandler := handler2.HTTPHandler{
-			App:            mockBaseHTTPHandler,
-			ProfileService: mockProfileService,
+			App:          mockBaseHTTPHandler,
+			UsersService: mockUsersService,
 		}
 
-		r.GET("/profiles", mockBaseHTTPHandler.GuestRunAction(httpHandler.Find))
+		r.GET("/userss", mockBaseHTTPHandler.GuestRunAction(httpHandler.Find))
 
 		// Prepare mock response data
-		profiles := &[]domain.Profile{
+		userss := &[]domain.Users{
 			{
 				ID:        1,
-				Profile:   "test_profile_1",
+				Email:     "test_users_1",
 				Password:  "test_password_1",
 				CreatedAt: nil,
 			},
 			{
 				ID:        2,
-				Profile:   "test_profile_2",
+				Email:     "test_users_2",
 				Password:  "test_password_2",
 				CreatedAt: nil,
 			},
 		}
 
 		// Create HTTP GET request
-		req, _ := http.NewRequest("GET", "/profiles", nil)
+		req, _ := http.NewRequest("GET", "/userss", nil)
 		req.Header.Set("Content-Type", "application/json")
 
 		// Create gin context
@@ -507,7 +507,7 @@ func TestFindHandler(t *testing.T) {
 		ginCtx.Request = req
 
 		// Set up the expectation on the mock service
-		mockProfileService.On("Find", mock.Anything).Return(profiles, nil)
+		mockUsersService.On("Find", mock.Anything).Return(userss, nil)
 
 		// Perform request
 		r.ServeHTTP(w, req)
@@ -516,28 +516,28 @@ func TestFindHandler(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 
 		// Check response body
-		expectedBody := `{"status_code": 200, "message": "success", "data": [{"id": 1, "profile": "test_profile_1", "password": "test_password_1", "created_at": null}, {"id": 2, "profile": "test_profile_2", "password": "test_password_2", "created_at": null}]}`
+		expectedBody := `{"status_code": 200, "message": "success", "data": [{"id": 1, "users": "test_users_1", "password": "test_password_1", "created_at": null}, {"id": 2, "users": "test_users_2", "password": "test_password_2", "created_at": null}]}`
 		assert.JSONEq(t, expectedBody, w.Body.String())
 
 		// Assert that the mock was called with the expected parameters
-		mockProfileService.AssertCalled(t, "Find", mock.Anything)
+		mockUsersService.AssertCalled(t, "Find", mock.Anything)
 	})
 	t.Run("Error service", func(t *testing.T) {
 		t.Parallel()
-		// Mock GORM DB and ProfileService
+		// Mock GORM DB and UsersService
 		r := gin.Default()
 		dbMock, _ := gorm.Open(nil, nil)
-		mockProfileService := new(mocks.ProfileService)
+		mockUsersService := new(mocks.Service)
 		mockBaseHTTPHandler := handler.NewBaseHTTPHandler(dbMock, nil, nil, nil)
 		httpHandler := handler2.HTTPHandler{
-			App:            mockBaseHTTPHandler,
-			ProfileService: mockProfileService,
+			App:          mockBaseHTTPHandler,
+			UsersService: mockUsersService,
 		}
 
-		r.GET("/profiles", mockBaseHTTPHandler.GuestRunAction(httpHandler.Find))
+		r.GET("/userss", mockBaseHTTPHandler.GuestRunAction(httpHandler.Find))
 
 		// Create HTTP GET request
-		req, _ := http.NewRequest("GET", "/profiles", nil)
+		req, _ := http.NewRequest("GET", "/userss", nil)
 		req.Header.Set("Content-Type", "application/json")
 
 		// Create gin context
@@ -546,7 +546,7 @@ func TestFindHandler(t *testing.T) {
 		ginCtx.Request = req
 
 		// Set up the expectation on the mock service
-		mockProfileService.On("Find", mock.Anything).Return(nil, errService)
+		mockUsersService.On("Find", mock.Anything).Return(nil, errService)
 
 		// Perform request
 		r.ServeHTTP(w, req)
@@ -555,10 +555,10 @@ func TestFindHandler(t *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 
 		// Check response body
-		expectedBody := `{"status_code": 500, "message": "error fetching profiles", "error": "service error"}`
+		expectedBody := `{"status_code": 500, "message": "error fetching userss", "error": "service error"}`
 		assert.JSONEq(t, expectedBody, w.Body.String())
 
 		// Assert that the mock was called with the expected parameters
-		mockProfileService.AssertCalled(t, "Find", mock.Anything)
+		mockUsersService.AssertCalled(t, "Find", mock.Anything)
 	})
 }

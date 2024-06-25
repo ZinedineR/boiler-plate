@@ -6,12 +6,18 @@ import (
 	"boiler-plate/internal/base/handler"
 )
 
-func (h *HttpServe) setupProfileRouter() {
-	h.GuestRoute("GET", "/profile", h.ProfileHandler.Find)
-	h.GuestRoute("POST", "/profile", h.ProfileHandler.Create)
-	h.GuestRoute("PUT", "/profile/:id", h.ProfileHandler.Update)
-	h.GuestRoute("GET", "/profile/:id", h.ProfileHandler.Detail)
-	h.GuestRoute("DELETE", "/profile/:id", h.ProfileHandler.Delete)
+func (h *HttpServe) setupUsersRouter() {
+	h.GuestRoute("GET", "/users", h.UsersHandler.Find)
+	h.GuestRoute("POST", "/users", h.UsersHandler.Create)
+	h.GuestRoute("PUT", "/users/:id", h.UsersHandler.Update)
+	h.GuestRoute("GET", "/users/:id", h.UsersHandler.Detail)
+	h.GuestRoute("DELETE", "/users/:id", h.UsersHandler.Delete)
+	h.GuestRoute("GET", "/users/:id/submissions", h.SubmissionsHandler.FindByUser)
+
+	h.GuestRoute("GET", "/submissions", h.SubmissionsHandler.Find)
+	h.GuestRoute("POST", "/submissions", h.SubmissionsHandler.Create)
+	h.GuestRoute("GET", "/submissions/:id", h.SubmissionsHandler.Detail)
+	h.GuestRoute("DELETE", "/submissions/:id", h.SubmissionsHandler.Delete)
 }
 
 func (h *HttpServe) UserRoute(method, path string, f handler.HandlerFnInterface) {

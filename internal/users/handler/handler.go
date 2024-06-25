@@ -3,8 +3,8 @@ package handler
 import (
 	"boiler-plate/internal/base/app"
 	"boiler-plate/internal/base/handler"
-	"boiler-plate/internal/profile/domain"
-	"boiler-plate/internal/profile/service"
+	"boiler-plate/internal/users/domain"
+	"boiler-plate/internal/users/service"
 	"boiler-plate/pkg/exception"
 	"boiler-plate/pkg/httputils"
 	"boiler-plate/pkg/server"
@@ -12,16 +12,16 @@ import (
 )
 
 type HTTPHandler struct {
-	App            *handler.BaseHTTPHandler
-	ProfileService service.Service
+	App          *handler.BaseHTTPHandler
+	UsersService service.Service
 }
 
 func NewHTTPHandler(
-	handler *handler.BaseHTTPHandler, ProfileService service.Service,
+	handler *handler.BaseHTTPHandler, UsersService service.Service,
 ) *HTTPHandler {
 	return &HTTPHandler{
-		App:            handler,
-		ProfileService: ProfileService,
+		App:          handler,
+		UsersService: UsersService,
 	}
 }
 
@@ -54,14 +54,14 @@ func (h HTTPHandler) ThrowBadRequestException(ctx *app.Context, message string) 
 
 func (h HTTPHandler) Create(ctx *app.Context) *server.ResponseInterface {
 	// Binding JSON
-	request := domain.Profile{}
+	request := domain.Users{}
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		err := exception.InvalidArgument("error reading request")
 		resException := httputils.GenErrorResponseException(err)
 		return h.App.AsJsonInterface(ctx, http.StatusBadRequest, resException)
 	}
 
-	if err := h.ProfileService.Create(ctx, &request); err != nil {
+	if err := h.UsersService.Create(ctx, &request); err != nil {
 		responseException := httputils.GenErrorResponseException(err)
 		return h.App.AsJsonInterface(ctx, responseException.StatusCode, responseException)
 	}
@@ -75,7 +75,7 @@ func (h HTTPHandler) Create(ctx *app.Context) *server.ResponseInterface {
 func (h HTTPHandler) Update(ctx *app.Context) *server.ResponseInterface {
 	id := ctx.Param("id")
 	// Binding JSON
-	request := domain.Profile{}
+	request := domain.Users{}
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		err := exception.InvalidArgument("error reading request")
 		resException := httputils.GenErrorResponseException(err)
@@ -83,7 +83,7 @@ func (h HTTPHandler) Update(ctx *app.Context) *server.ResponseInterface {
 	}
 
 	// Exec Service
-	errException := h.ProfileService.Update(ctx, id, &request)
+	errException := h.UsersService.Update(ctx, id, &request)
 	if errException != nil {
 		responseException := httputils.GenErrorResponseException(errException)
 		return h.App.AsJsonInterface(ctx, responseException.StatusCode, responseException)
@@ -101,7 +101,7 @@ func (h HTTPHandler) Detail(ctx *app.Context) *server.ResponseInterface {
 	id := ctx.Param("id")
 
 	// Exec Service
-	detailAsset, errException := h.ProfileService.Detail(ctx, id)
+	detailAsset, errException := h.UsersService.Detail(ctx, id)
 	if errException != nil {
 		respException := httputils.GenErrorResponseException(errException)
 		return h.App.AsJsonInterface(ctx, respException.StatusCode, respException)
@@ -117,7 +117,7 @@ func (h HTTPHandler) Delete(ctx *app.Context) *server.ResponseInterface {
 	id := ctx.Param("id")
 
 	// Exec Service
-	errException := h.ProfileService.Delete(ctx, id)
+	errException := h.UsersService.Delete(ctx, id)
 	if errException != nil {
 		respException := httputils.GenErrorResponseException(errException)
 		return h.App.AsJsonInterface(ctx, respException.StatusCode, respException)
@@ -129,7 +129,9 @@ func (h HTTPHandler) Delete(ctx *app.Context) *server.ResponseInterface {
 }
 
 func (h HTTPHandler) Find(ctx *app.Context) *server.ResponseInterface {
-	result, err := h.ProfileService.Find(ctx)
+	limitParam := ctx.DefaultQuery("pageSize", "0")
+	pageParam := ctx.DefaultQuery("page", "0")
+	result, err := h.UsersService.Find(ctx, limitParam, pageParam)
 	if err != nil {
 		responseException := httputils.GenErrorResponseException(err)
 		return h.App.AsJsonInterface(ctx, responseException.StatusCode, responseException)
