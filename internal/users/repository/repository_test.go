@@ -62,8 +62,6 @@ func TestUsersRepository_CreateUser(t *testing.T) {
 		// Assert the result
 		require.NoError(t, err)
 		require.NotNil(t, users.ID)
-		//require.Equal(t, user.Name, createdUser.Name)
-		//require.Equal(t, user.Email, createdUser.Email)
 	})
 
 	t.Run("Negative Case", func(t *testing.T) {

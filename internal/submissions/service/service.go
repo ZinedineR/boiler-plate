@@ -70,7 +70,7 @@ func (s service) Delete(ctx context.Context, id string) *exception.Exception {
 	}
 	err = s.SubmissionsRepo.Delete(ctx, tx, idInt)
 	if err != nil {
-		exception.Internal("error deleting submissions", err)
+		return exception.Internal("error deleting submissions", err)
 	}
 	if err := tx.Commit().Error; err != nil {
 		return exception.Internal("commit transaction", err)
@@ -92,7 +92,7 @@ func (s service) Find(ctx context.Context, limit, page string) (*FindResponse, *
 	}
 	result, pagination, err := s.SubmissionsRepo.Find(ctx, tx, limitInt, pageInt)
 	if err != nil {
-		return nil, exception.Internal("error geting submissions", err)
+		return nil, exception.Internal("error getting submissions", err)
 	}
 	if err := tx.Commit().Error; err != nil {
 		return nil, exception.Internal("commit transaction", err)
@@ -125,7 +125,7 @@ func (s service) FindByUser(ctx context.Context, limit, page, userid string) (
 
 	result, pagination, err := s.SubmissionsRepo.FindByUser(ctx, tx, limitInt, pageInt, idInt)
 	if err != nil {
-		return nil, exception.Internal("error geting submissions", err)
+		return nil, exception.Internal("error getting submissions", err)
 	}
 	if err := tx.Commit().Error; err != nil {
 		return nil, exception.Internal("commit transaction", err)
@@ -147,7 +147,7 @@ func (s service) Detail(ctx context.Context, id string) (*domain.Submissions, *e
 	}
 	result, err := s.SubmissionsRepo.Detail(ctx, tx, idInt)
 	if err != nil {
-		return nil, exception.Internal("error deleting submissions", err)
+		return nil, exception.Internal("error getting detail submissions", err)
 	}
 	if err := tx.Commit().Error; err != nil {
 		return nil, exception.Internal("commit transaction", err)

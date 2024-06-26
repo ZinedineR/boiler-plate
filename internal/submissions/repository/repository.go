@@ -116,7 +116,7 @@ func (r Repo) DetailByUser(ctx context.Context, tx *gorm.DB, id int) (*domain.Su
 
 	if err := tx.WithContext(ctx).
 		Model(&domain.Submissions{}).
-		Order("created_at desc").
+		Order("created_at DESC").
 		First(&models, "user_id = ?", id).
 		Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
