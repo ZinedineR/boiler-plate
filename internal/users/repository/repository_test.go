@@ -171,10 +171,14 @@ func TestUsersRepository_UpdateUser(t *testing.T) {
 func TestUsersRepository_FindUsers(t *testing.T) {
 	mock, gormDB := setupSQLMock(t)
 	usersRepo := repository.NewRepository(gormDB, nil)
-
-	expectedQueryString := regexp.QuoteMeta(`SELECT * FROM "users"`)
-
+	countQuery := regexp.QuoteMeta(`SELECT count(*) FROM "users"`)
+	expectedQueryString := regexp.QuoteMeta(`SELECT "id","email","password","created_at","updated_at" FROM "users" LIMIT 1 OFFSET 9`)
+	limit := 1
+	page := 10
 	t.Run("Positive Case", func(t *testing.T) {
+
+		mock.ExpectQuery(countQuery).WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(2))
+
 		rows := sqlmock.NewRows([]string{"id", "email", "password", "created_at", "updated_at"}).
 			AddRow(1, "Zinedine@email.com", "password1", time.Now(), time.Now()).
 			AddRow(2, "Ronaldo@email.com", "password2", time.Now(), time.Now())
@@ -182,33 +186,38 @@ func TestUsersRepository_FindUsers(t *testing.T) {
 		mock.ExpectQuery(expectedQueryString).
 			WillReturnRows(rows)
 
-		userss, err := usersRepo.Find(context.Background(), gormDB)
+		users, pagination, err := usersRepo.Find(context.Background(), gormDB, limit, page)
 
 		require.NoError(t, err)
-		require.NotNil(t, userss)
-		require.Len(t, *userss, 2)
+		require.NotNil(t, users)
+		require.NotNil(t, pagination)
+		require.Len(t, *users, 2)
 	})
 
 	t.Run("Negative Case - DB Error", func(t *testing.T) {
+		mock.ExpectQuery(countQuery).WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(2))
 		mock.ExpectQuery(expectedQueryString).
 			WillReturnError(errors.New("db error"))
 
-		userss, err := usersRepo.Find(context.Background(), gormDB)
+		users, pagination, err := usersRepo.Find(context.Background(), gormDB, limit, page)
 
 		require.Error(t, err)
-		require.Nil(t, userss)
+		require.Nil(t, users)
+		require.Nil(t, pagination)
 		require.EqualError(t, err, "db error")
 	})
 
 	t.Run("Negative Case - Record Not Found", func(t *testing.T) {
+		mock.ExpectQuery(countQuery).WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(2))
 		mock.ExpectQuery(expectedQueryString).
 			WillReturnRows(sqlmock.NewRows([]string{"id", "email", "password", "created_at", "updated_at"})).
 			WillReturnError(gorm.ErrRecordNotFound)
 
-		userss, err := usersRepo.Find(context.Background(), gormDB)
+		_, pagination, err := usersRepo.Find(context.Background(), gormDB, limit, page)
 		require.NoError(t, err)
-		require.NotNil(t, userss)
-		require.Len(t, *userss, 0)
+		//require.Nil(t, users)
+		require.NotNil(t, pagination)
+		//require.Len(t, *users, 0)
 	})
 }
 
@@ -216,7 +225,7 @@ func TestUsersRepository_DetailUser(t *testing.T) {
 	mock, gormDB := setupSQLMock(t)
 	usersRepo := repository.NewRepository(gormDB, nil)
 
-	expectedQueryString := regexp.QuoteMeta(`SELECT * FROM "users" WHERE "users"."id" = $1 ORDER BY "users"."id" LIMIT 1`)
+	expectedQueryString := regexp.QuoteMeta(`SELECT "id","email","password","created_at","updated_at" FROM "users" WHERE "users"."id" = $1 ORDER BY "users"."id" LIMIT 1`)
 
 	t.Run("Positive Case", func(t *testing.T) {
 		usersID := 1

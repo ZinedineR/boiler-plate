@@ -5,6 +5,8 @@ import (
 	"boiler-plate/internal/users/domain"
 	handler2 "boiler-plate/internal/users/handler"
 	"boiler-plate/internal/users/mocks"
+	"boiler-plate/internal/users/service"
+	"boiler-plate/pkg/db"
 	"boiler-plate/pkg/exception"
 	"bytes"
 	"encoding/json"
@@ -17,6 +19,17 @@ import (
 	"net/http/httptest"
 	"testing"
 )
+
+func TestNewHTTPHandler_ValidInitialization(t *testing.T) {
+	dbMock, _ := gorm.Open(nil, nil)
+	mockService := new(mocks.Service)
+	mockBaseHandler := handler.NewBaseHTTPHandler(dbMock, nil, nil, nil)
+	httpHandler := handler2.NewHTTPHandler(mockBaseHandler, mockService)
+
+	assert.NotNil(t, httpHandler)
+	assert.Equal(t, mockBaseHandler, httpHandler.App)
+	assert.Equal(t, mockService, httpHandler.UsersService)
+}
 
 func TestPostHandler(t *testing.T) {
 	// Setup router
@@ -62,7 +75,7 @@ func TestPostHandler(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 
 		// Check response body
-		expectedBody := `{"status_code": 200, "message": "success created", "data": {"id" :0, "users": "test_users", "password": "test_password", "created_at": null}}`
+		expectedBody := `{"status_code": 200, "message": "success created", "data": {"id" :0, "email": "test_users", "password": "test_password", "created_at": null, "updated_at": null}}`
 		assert.JSONEq(t, expectedBody, w.Body.String())
 
 		// Assert that the mock was called with the expected parameters
@@ -196,7 +209,7 @@ func TestUpdateHandler(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 
 		// Check response body
-		expectedBody := `{"status_code": 200, "message": "success update", "data": {"id" :0, "users": "updated_users", "password": "updated_password", "created_at": null}}`
+		expectedBody := `{"status_code": 200, "message": "success update", "data": {"id" :0, "email": "updated_users", "password": "updated_password", "created_at": null, "updated_at": null}}`
 		assert.JSONEq(t, expectedBody, w.Body.String())
 
 		// Assert that the mock was called with the expected parameters
@@ -389,11 +402,13 @@ func TestDetailHandler(t *testing.T) {
 		r.GET("/users/:id", mockBaseHTTPHandler.GuestRunAction(httpHandler.Detail))
 
 		// Prepare mock response data
-		users := &domain.Users{
-			ID:        1,
-			Email:     "test_users",
-			Password:  "test_password",
-			CreatedAt: nil,
+		users := &domain.UserResponse{
+			ID:             1,
+			Email:          "test_users",
+			Password:       "test_password",
+			RiskScore:      28,
+			RiskCategory:   "Moderate Risk",
+			RiskDefinition: "This user is classified as moderate risk based on their investment profile.",
 		}
 
 		// Create HTTP GET request
@@ -415,7 +430,7 @@ func TestDetailHandler(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 
 		// Check response body
-		expectedBody := `{"status_code": 200, "message": "success", "data": {"id": 1, "users": "test_users", "password": "test_password", "created_at": null}}`
+		expectedBody := `{"status_code": 200, "message": "success", "data": {"email":"test_users", "id":1, "password":"test_password", "risk_category":"Moderate Risk", "risk_definition":"This user is classified as moderate risk based on their investment profile.", "risk_score":28, "created_at": null,  "updated_at": null}}`
 		assert.JSONEq(t, expectedBody, w.Body.String())
 
 		// Assert that the mock was called with the expected parameters
@@ -465,8 +480,9 @@ func TestDetailHandler(t *testing.T) {
 func TestFindHandler(t *testing.T) {
 	// Setup router
 
-	errService := exception.Internal("error fetching userss", errors.New("service error"))
-
+	errService := exception.Internal("error fetching users", errors.New("service error"))
+	limit := "1"
+	page := "10"
 	t.Run("Positive Case", func(t *testing.T) {
 		t.Parallel()
 		// Mock GORM DB and UsersService
@@ -479,26 +495,35 @@ func TestFindHandler(t *testing.T) {
 			UsersService: mockUsersService,
 		}
 
-		r.GET("/userss", mockBaseHTTPHandler.GuestRunAction(httpHandler.Find))
+		r.GET("/users", mockBaseHTTPHandler.GuestRunAction(httpHandler.Find))
 
 		// Prepare mock response data
-		userss := &[]domain.Users{
+		users := &[]domain.UserResponse{
 			{
-				ID:        1,
-				Email:     "test_users_1",
-				Password:  "test_password_1",
-				CreatedAt: nil,
+				ID:             1,
+				Email:          "test_users_1",
+				Password:       "test_password_1",
+				RiskScore:      28,
+				RiskCategory:   "Moderate Risk",
+				RiskDefinition: "This user is classified as moderate risk based on their investment profile.",
 			},
 			{
-				ID:        2,
-				Email:     "test_users_2",
-				Password:  "test_password_2",
-				CreatedAt: nil,
+				ID:             2,
+				Email:          "test_users_2",
+				Password:       "test_password_2",
+				CreatedAt:      nil,
+				RiskScore:      28,
+				RiskCategory:   "Moderate Risk",
+				RiskDefinition: "This user is classified as moderate risk based on their investment profile.",
 			},
 		}
-
+		pagination := db.NewPaginate(1, 10)
+		expectedResponse := &service.FindResponse{
+			Pagination: *pagination,
+			Data:       *users,
+		}
 		// Create HTTP GET request
-		req, _ := http.NewRequest("GET", "/userss", nil)
+		req, _ := http.NewRequest("GET", "/users?pageSize="+limit+"&page="+page, nil)
 		req.Header.Set("Content-Type", "application/json")
 
 		// Create gin context
@@ -507,7 +532,7 @@ func TestFindHandler(t *testing.T) {
 		ginCtx.Request = req
 
 		// Set up the expectation on the mock service
-		mockUsersService.On("Find", mock.Anything).Return(userss, nil)
+		mockUsersService.On("Find", mock.Anything, limit, page).Return(expectedResponse, nil)
 
 		// Perform request
 		r.ServeHTTP(w, req)
@@ -516,11 +541,13 @@ func TestFindHandler(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 
 		// Check response body
-		expectedBody := `{"status_code": 200, "message": "success", "data": [{"id": 1, "users": "test_users_1", "password": "test_password_1", "created_at": null}, {"id": 2, "users": "test_users_2", "password": "test_password_2", "created_at": null}]}`
+		//expectedBody := `{"status_code": 200, "message": "success", "data": [{"id": 1, "users": "test_users_1", "password": "test_password_1", "created_at": null}, {"id": 2, "users": "test_users_2", "password": "test_password_2", "created_at": null}]}`
+		expectedBody := `{"data": {"data": [{"created_at": null, "email": "test_users_1", "id": 1, "password": "test_password_1", "risk_category": "Moderate Risk", "risk_definition": "This user is classified as moderate risk based on their investment profile.", "risk_score": 28, "updated_at": null}, {"created_at": null, "email": "test_users_2", "id": 2, "password": "test_password_2", "risk_category": "Moderate Risk", "risk_definition": "This user is classified as moderate risk based on their investment profile.", "risk_score": 28, "updated_at": null}], "pagination": {"limit": 1, "page": 10}}, "message": "success", "status_code": 200}`
+
 		assert.JSONEq(t, expectedBody, w.Body.String())
 
 		// Assert that the mock was called with the expected parameters
-		mockUsersService.AssertCalled(t, "Find", mock.Anything)
+		mockUsersService.AssertCalled(t, "Find", mock.Anything, limit, page)
 	})
 	t.Run("Error service", func(t *testing.T) {
 		t.Parallel()
@@ -534,10 +561,10 @@ func TestFindHandler(t *testing.T) {
 			UsersService: mockUsersService,
 		}
 
-		r.GET("/userss", mockBaseHTTPHandler.GuestRunAction(httpHandler.Find))
+		r.GET("/users", mockBaseHTTPHandler.GuestRunAction(httpHandler.Find))
 
 		// Create HTTP GET request
-		req, _ := http.NewRequest("GET", "/userss", nil)
+		req, _ := http.NewRequest("GET", "/users?pageSize="+limit+"&page="+page, nil)
 		req.Header.Set("Content-Type", "application/json")
 
 		// Create gin context
@@ -546,7 +573,7 @@ func TestFindHandler(t *testing.T) {
 		ginCtx.Request = req
 
 		// Set up the expectation on the mock service
-		mockUsersService.On("Find", mock.Anything).Return(nil, errService)
+		mockUsersService.On("Find", mock.Anything, limit, page).Return(nil, errService)
 
 		// Perform request
 		r.ServeHTTP(w, req)
@@ -555,10 +582,10 @@ func TestFindHandler(t *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 
 		// Check response body
-		expectedBody := `{"status_code": 500, "message": "error fetching userss", "error": "service error"}`
+		expectedBody := `{"status_code": 500, "message": "error fetching users", "error": "service error"}`
 		assert.JSONEq(t, expectedBody, w.Body.String())
 
 		// Assert that the mock was called with the expected parameters
-		mockUsersService.AssertCalled(t, "Find", mock.Anything)
+		mockUsersService.AssertCalled(t, "Find", mock.Anything, limit, page)
 	})
 }

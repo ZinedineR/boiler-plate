@@ -3,8 +3,10 @@
 package mocks
 
 import (
-	domain "boiler-plate/internal/users/domain"
+	db "boiler-plate/pkg/db"
 	context "context"
+
+	domain "boiler-plate/internal/users/domain"
 
 	gorm "gorm.io/gorm"
 
@@ -71,19 +73,19 @@ func (_m *UsersRepository) Delete(ctx context.Context, tx *gorm.DB, key int) err
 }
 
 // Detail provides a mock function with given fields: ctx, tx, id
-func (_m *UsersRepository) Detail(ctx context.Context, tx *gorm.DB, id int) (*domain.Users, error) {
+func (_m *UsersRepository) Detail(ctx context.Context, tx *gorm.DB, id int) (*domain.UserResponse, error) {
 	ret := _m.Called(ctx, tx, id)
 
-	var r0 *domain.Users
+	var r0 *domain.UserResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gorm.DB, int) (*domain.Users, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gorm.DB, int) (*domain.UserResponse, error)); ok {
 		return rf(ctx, tx, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gorm.DB, int) *domain.Users); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gorm.DB, int) *domain.UserResponse); ok {
 		r0 = rf(ctx, tx, id)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*domain.Users)
+			r0 = ret.Get(0).(*domain.UserResponse)
 		}
 	}
 
@@ -96,30 +98,39 @@ func (_m *UsersRepository) Detail(ctx context.Context, tx *gorm.DB, id int) (*do
 	return r0, r1
 }
 
-// Find provides a mock function with given fields: ctx, tx
-func (_m *UsersRepository) Find(ctx context.Context, tx *gorm.DB) (*[]domain.Users, error) {
-	ret := _m.Called(ctx, tx)
+// Find provides a mock function with given fields: ctx, tx, limit, page
+func (_m *UsersRepository) Find(ctx context.Context, tx *gorm.DB, limit int, page int) (*[]domain.UserResponse, *db.Paginate, error) {
+	ret := _m.Called(ctx, tx, limit, page)
 
-	var r0 *[]domain.Users
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gorm.DB) (*[]domain.Users, error)); ok {
-		return rf(ctx, tx)
+	var r0 *[]domain.UserResponse
+	var r1 *db.Paginate
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gorm.DB, int, int) (*[]domain.UserResponse, *db.Paginate, error)); ok {
+		return rf(ctx, tx, limit, page)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gorm.DB) *[]domain.Users); ok {
-		r0 = rf(ctx, tx)
+	if rf, ok := ret.Get(0).(func(context.Context, *gorm.DB, int, int) *[]domain.UserResponse); ok {
+		r0 = rf(ctx, tx, limit, page)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*[]domain.Users)
+			r0 = ret.Get(0).(*[]domain.UserResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gorm.DB) error); ok {
-		r1 = rf(ctx, tx)
+	if rf, ok := ret.Get(1).(func(context.Context, *gorm.DB, int, int) *db.Paginate); ok {
+		r1 = rf(ctx, tx, limit, page)
 	} else {
-		r1 = ret.Error(1)
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*db.Paginate)
+		}
 	}
 
-	return r0, r1
+	if rf, ok := ret.Get(2).(func(context.Context, *gorm.DB, int, int) error); ok {
+		r2 = rf(ctx, tx, limit, page)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // Update provides a mock function with given fields: ctx, tx, id, model

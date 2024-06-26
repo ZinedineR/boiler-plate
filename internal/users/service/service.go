@@ -60,7 +60,7 @@ func (s service) Update(
 	}
 	err = s.UsersRepo.Update(ctx, tx, idInt, users)
 	if err != nil {
-		exception.Internal("error inserting users", err)
+		return exception.Internal("error updating users", err)
 	}
 	if err := tx.Commit().Error; err != nil {
 		return exception.Internal("commit transaction", err)
@@ -77,7 +77,7 @@ func (s service) Delete(ctx context.Context, id string) *exception.Exception {
 	}
 	err = s.UsersRepo.Delete(ctx, tx, idInt)
 	if err != nil {
-		exception.Internal("error deleting users", err)
+		return exception.Internal("error deleting users", err)
 	}
 	if err := tx.Commit().Error; err != nil {
 		return exception.Internal("commit transaction", err)
@@ -155,7 +155,7 @@ func (s service) Auth(ctx context.Context, email, password string) (*domain.User
 	defer tx.Rollback()
 	result, err := s.UsersRepo.Auth(ctx, tx, email, password)
 	if err != nil {
-		return nil, exception.Internal("error deleting users", err)
+		return nil, exception.Internal("error finding users", err)
 	}
 	if err := tx.Commit().Error; err != nil {
 		return nil, exception.Internal("commit transaction", err)
