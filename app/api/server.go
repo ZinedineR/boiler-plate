@@ -3,11 +3,13 @@ package api
 import (
 	"boiler-plate/app/appconf"
 	"fmt"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 	"log"
 	"net"
 	"os"
 	"strings"
+	"time"
 
 	"boiler-plate/internal/base/handler"
 	subHandler "boiler-plate/internal/submissions/handler"
@@ -25,23 +27,29 @@ type HttpServe struct {
 	UsersHandler       *tempHandler.HTTPHandler
 	SubmissionsHandler *subHandler.HTTPHandler
 	GRPCServer         *grpc.Server
+	GRPCGateway        *runtime.ServeMux
 }
 
 func (h *HttpServe) Run(config *appconf.Config) error {
-	h.setupUsersRouter()
-	h.setupDevRouter(config)
+	//h.setupUsersRouter()
+	//h.setupDevRouter(config)
 	h.setupGRPCRouter()
 	h.base.Handlers = h
 	//if h.base.IsStaging() {
 	//	h.setupDevRouter()
 	//}
-	conn, err := net.Listen("tcp", ":"+config.AppEnvConfig.HttpPort)
+	//conn, err := net.Listen("tcp", ":"+config.AppEnvConfig.HttpPort)
+	conn, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := h.GRPCServer.Serve(conn); err != nil {
-		log.Fatalf("failed to serve: %v", err)
-	}
+	go func() {
+		if err := h.GRPCServer.Serve(conn); err != nil {
+			log.Fatalf("failed to serve: %v", err)
+		}
+	}()
+	time.Sleep(time.Second)
+	h.setupGRPCGateway()
 	return h.router.Run(fmt.Sprintf(":%s", config.AppEnvConfig.HttpPort))
 }
 
@@ -79,11 +87,13 @@ func New(
 		AllowCredentials: true,
 	}))
 	grpcServer := grpc.NewServer()
+	grpcGatewayMux := runtime.NewServeMux()
 	return &HttpServe{
 		router:             r,
 		base:               base,
 		UsersHandler:       Users,
 		SubmissionsHandler: Submissions,
 		GRPCServer:         grpcServer,
+		GRPCGateway:        grpcGatewayMux,
 	}
 }

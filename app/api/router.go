@@ -4,13 +4,31 @@ import (
 	"boiler-plate/internal/base/handler"
 	pb "boiler-plate/proto/helloworld/v1"
 	pbUsers "boiler-plate/proto/users/v1"
+	"context"
 	"fmt"
+	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"log"
 )
 
 func (h *HttpServe) setupGRPCRouter() {
 	pb.RegisterServiceServer(h.GRPCServer, h.base.GRPCHandler)
 	pbUsers.RegisterServiceServer(h.GRPCServer, h.UsersHandler.GRPCHandler)
 
+}
+
+func (h *HttpServe) setupGRPCGateway() {
+	client, err := grpc.NewClient(
+		"0.0.0.0:50051",
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := pbUsers.RegisterServiceHandler(context.Background(), h.GRPCGateway, client); err != nil {
+		log.Fatal("failed to register users gateway")
+	}
+	h.router.Group("/api/v2/*{grpc_gateway}").Any("", gin.WrapH(h.GRPCGateway))
 }
 
 func (h *HttpServe) setupUsersRouter() {
@@ -45,6 +63,22 @@ func (h *HttpServe) UserRoute(method, path string, f handler.HandlerFnInterface)
 
 func (h *HttpServe) GuestRoute(method, path string, f handler.HandlerFnInterface) {
 	guestRoute := h.router.Group("/api/v2")
+	switch method {
+	case "GET":
+		guestRoute.GET(path, AuthMiddle(), h.base.GuestRunAction(f))
+	case "POST":
+		guestRoute.POST(path, AuthMiddle(), h.base.GuestRunAction(f))
+	case "PUT":
+		guestRoute.PUT(path, AuthMiddle(), h.base.GuestRunAction(f))
+	case "DELETE":
+		guestRoute.DELETE(path, AuthMiddle(), h.base.GuestRunAction(f))
+	default:
+		panic(fmt.Sprintf(":%s method not allow", method))
+	}
+}
+
+func (h *HttpServe) GRPCRoute(method, path string, f handler.HandlerFnInterface) {
+	guestRoute := h.router.Group("/v1/*{grpc_gateway}")
 	switch method {
 	case "GET":
 		guestRoute.GET(path, AuthMiddle(), h.base.GuestRunAction(f))

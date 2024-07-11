@@ -1,15 +1,38 @@
 syntax = "proto3";
 import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
 option go_package = "boiler-plate/proto/users/v1;users";
 
 package proto.users.v1;
 
 service Service {
-  rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {};
-  rpc UpdateUser (UpdateUserRequest) returns (UpdateUserResponse) {};
-  rpc DetailUser (DetailUserRequest) returns (DetailUserResponse) {}
-  rpc GetUser (GetUserRequest) returns (GetUserResponse) {}
-  rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse) {}
+  rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {
+    option (google.api.http) = {
+      post: "/api/v2/users"
+      body: "*"
+    };
+  };
+  rpc UpdateUser (UpdateUserRequest) returns (UpdateUserResponse) {
+    option (google.api.http) = {
+      put: "/api/v2/users"
+      body: "*"
+    };
+  };
+  rpc DetailUser (DetailUserRequest) returns (DetailUserResponse) {
+    option (google.api.http) = {
+      get: "/api/v2/users/{id}"
+    };
+  }
+  rpc GetUser (GetUserRequest) returns (GetUserResponse) {
+    option (google.api.http) = {
+      get: "/api/v2/users"
+    };
+  }
+  rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse) {
+    option (google.api.http) = {
+      delete: "/api/v2/users"
+    };
+  }
 }
 
 message Users {

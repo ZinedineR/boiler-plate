@@ -5,6 +5,9 @@ import (
 	"boiler-plate/internal/users/service"
 	users "boiler-plate/proto/users/v1"
 	"context"
+	"fmt"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -41,7 +44,7 @@ func (s *GRPCHandler) GetUser(ctx context.Context, in *users.GetUserRequest) (*u
 
 	result, err := s.UsersService.Find(ctx, in.GetLimit(), in.GetPage())
 	if err != nil {
-		return nil, err.Error
+		return nil, status.Error(codes.Internal, fmt.Sprintf("get user error: %v", err))
 	}
 	var usersProto []*users.Users
 	for _, dataUser := range result.Data {
