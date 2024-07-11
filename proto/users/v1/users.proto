@@ -1,0 +1,80 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+option go_package = "boiler-plate/proto/users/v1;users";
+
+package proto.users.v1;
+
+service Service {
+  rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {};
+  rpc UpdateUser (UpdateUserRequest) returns (UpdateUserResponse) {};
+  rpc DetailUser (DetailUserRequest) returns (DetailUserResponse) {}
+  rpc GetUser (GetUserRequest) returns (GetUserResponse) {}
+  rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse) {}
+}
+
+message Users {
+  int32 id = 1;                            // Go int to ProtoBuf int32
+  string email = 2;                        // Go string to ProtoBuf string
+  string password = 3;                     // Go string to ProtoBuf string
+  google.protobuf.Timestamp created_at = 4; // Go *time.Time to ProtoBuf Timestamp
+  google.protobuf.Timestamp updated_at = 5; // Go *time.Time to ProtoBuf Timestamp
+}
+
+message CreateUserRequest{
+  int32 id = 1;
+  string email = 2;                        // Go string to ProtoBuf string
+  string password = 3;                     // Go string to ProtoBuf string
+}
+
+message CreateUserResponse{
+  Users data = 1;
+  MutationResponse response = 2;
+}
+
+message UpdateUserRequest{
+  string id = 1;
+  string email = 2;                        // Go string to ProtoBuf string
+  string password = 3;                     // Go string to ProtoBuf string
+}
+
+message UpdateUserResponse{
+  Users data = 1;
+  MutationResponse response = 2;
+}
+
+message GetUserRequest{
+  string page = 1;
+  string limit= 2;
+}
+
+message GetUserResponse{
+  PaginationResponse Pagination = 1;
+  repeated Users users = 2; //Response users
+  MutationResponse response = 3;
+}
+message DetailUserRequest {
+  string id = 1; // Request id detailuser
+}
+
+message DetailUserResponse {
+  Users user = 1; // Response detailuser
+}
+
+message DeleteUserRequest {
+  string id = 1; // Request id detailuser
+}
+
+message DeleteUserResponse {
+  MutationResponse response = 1;
+}
+message PaginationResponse {
+  int32 limit = 1;
+  int32 page = 2;
+  int32 total_rows = 3;
+  int32 total_pages =4;
+}
+
+
+message MutationResponse {
+  string message = 1;
+}

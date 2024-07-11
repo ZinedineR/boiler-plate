@@ -3,6 +3,9 @@ package api
 import (
 	"boiler-plate/app/appconf"
 	"fmt"
+	"google.golang.org/grpc"
+	"log"
+	"net"
 	"os"
 	"strings"
 
@@ -21,17 +24,24 @@ type HttpServe struct {
 	base               *handler.BaseHTTPHandler
 	UsersHandler       *tempHandler.HTTPHandler
 	SubmissionsHandler *subHandler.HTTPHandler
+	GRPCServer         *grpc.Server
 }
 
 func (h *HttpServe) Run(config *appconf.Config) error {
 	h.setupUsersRouter()
 	h.setupDevRouter(config)
+	h.setupGRPCRouter()
 	h.base.Handlers = h
-
 	//if h.base.IsStaging() {
 	//	h.setupDevRouter()
 	//}
-
+	conn, err := net.Listen("tcp", ":"+config.AppEnvConfig.HttpPort)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := h.GRPCServer.Serve(conn); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
 	return h.router.Run(fmt.Sprintf(":%s", config.AppEnvConfig.HttpPort))
 }
 
@@ -68,11 +78,12 @@ func New(
 		AllowHeaders:     base.AppConfig.AppEnvConfig.AllowHeaders,
 		AllowCredentials: true,
 	}))
-
+	grpcServer := grpc.NewServer()
 	return &HttpServe{
 		router:             r,
 		base:               base,
 		UsersHandler:       Users,
 		SubmissionsHandler: Submissions,
+		GRPCServer:         grpcServer,
 	}
 }

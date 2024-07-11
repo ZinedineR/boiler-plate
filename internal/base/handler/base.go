@@ -1,19 +1,16 @@
 package handler
 
 import (
-	"fmt"
-	"net/http"
-	"time"
-
-	baseModel "boiler-plate/pkg/db"
-	"boiler-plate/pkg/httpclient"
-
-	"github.com/sirupsen/logrus"
-	"gorm.io/gorm"
-
 	"boiler-plate/app/appconf"
 	"boiler-plate/internal/base/app"
+	baseModel "boiler-plate/pkg/db"
+	"boiler-plate/pkg/httpclient"
 	"boiler-plate/pkg/server"
+	"fmt"
+	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
+	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,11 +19,12 @@ type HandlerFn func(ctx *app.Context) *server.Response
 type HandlerFnInterface func(ctx *app.Context) *server.ResponseInterface
 
 type BaseHTTPHandler struct {
-	Handlers   interface{}
-	DB         *gorm.DB
-	AppConfig  *appconf.Config
-	BaseModel  *baseModel.SQLClientRepository
-	HttpClient httpclient.Client
+	Handlers    interface{}
+	DB          *gorm.DB
+	AppConfig   *appconf.Config
+	BaseModel   *baseModel.SQLClientRepository
+	HttpClient  httpclient.Client
+	GRPCHandler *GRPCHandler
 }
 
 func NewBaseHTTPHandler(
@@ -34,12 +32,14 @@ func NewBaseHTTPHandler(
 	appConfig *appconf.Config,
 	baseModel *baseModel.SQLClientRepository,
 	httpClient httpclient.Client,
+	grpcHandler *GRPCHandler,
 ) *BaseHTTPHandler {
 	return &BaseHTTPHandler{
-		DB:         db,
-		AppConfig:  appConfig,
-		BaseModel:  baseModel,
-		HttpClient: httpClient,
+		DB:          db,
+		AppConfig:   appConfig,
+		BaseModel:   baseModel,
+		HttpClient:  httpClient,
+		GRPCHandler: grpcHandler,
 	}
 }
 

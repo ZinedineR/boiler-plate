@@ -1,10 +1,17 @@
 package api
 
 import (
-	"fmt"
-
 	"boiler-plate/internal/base/handler"
+	pb "boiler-plate/proto/helloworld/v1"
+	pbUsers "boiler-plate/proto/users/v1"
+	"fmt"
 )
+
+func (h *HttpServe) setupGRPCRouter() {
+	pb.RegisterServiceServer(h.GRPCServer, h.base.GRPCHandler)
+	pbUsers.RegisterServiceServer(h.GRPCServer, h.UsersHandler.GRPCHandler)
+
+}
 
 func (h *HttpServe) setupUsersRouter() {
 	h.GuestRoute("GET", "/users", h.UsersHandler.Find)

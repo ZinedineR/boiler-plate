@@ -43,10 +43,10 @@ func (s service) Create(
 			Answer:     answer.Answer,
 		})
 	}
-	jsonData, err := json.Marshal(answers)
-	if err != nil {
-		return exception.Internal("error marshalling old value", err)
-	}
+	jsonData, _ := json.Marshal(answers)
+	//if err != nil {
+	//	return exception.Internal("error marshalling old value", err)
+	//}
 	body := &domain.Submissions{
 		UserId:  req.UserId,
 		Answers: jsonData,

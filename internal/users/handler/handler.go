@@ -13,14 +13,16 @@ import (
 
 type HTTPHandler struct {
 	App          *handler.BaseHTTPHandler
+	GRPCHandler  *GRPCHandler
 	UsersService service.Service
 }
 
 func NewHTTPHandler(
-	handler *handler.BaseHTTPHandler, UsersService service.Service,
+	handler *handler.BaseHTTPHandler, grpc *GRPCHandler, UsersService service.Service,
 ) *HTTPHandler {
 	return &HTTPHandler{
 		App:          handler,
+		GRPCHandler:  grpc,
 		UsersService: UsersService,
 	}
 }

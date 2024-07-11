@@ -3,6 +3,7 @@ package repository_test
 import (
 	"boiler-plate/internal/users/domain"
 	"boiler-plate/internal/users/repository"
+	baseModel "boiler-plate/pkg/db"
 	"context"
 	"errors"
 	"fmt"
@@ -321,4 +322,88 @@ func TestUsersRepository_AuthUser(t *testing.T) {
 		require.NoError(t, err)
 		require.Nil(t, authUsers)
 	})
+}
+
+func TestRepo_Update(t *testing.T) {
+	type fields struct {
+		db   *gorm.DB
+		base *baseModel.SQLClientRepository
+	}
+	type args struct {
+		ctx   context.Context
+		tx    *gorm.DB
+		id    int
+		model *domain.Users
+	}
+	mock, gormDB := setupSQLMock(t)
+
+	usersRepo := repository.NewRepository(gormDB, nil)
+
+	expectedQueryString := regexp.QuoteMeta(`UPDATE "users" SET "email"=$1,"password"=$2,"updated_at"=$3 WHERE "id" = $4`)
+
+	usersId := 1
+	users := &domain.Users{
+		Email:    "Zinedine",
+		Password: "updated_password",
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		args      args
+		mockSetup func()
+		wantErr   bool
+	}{
+		{
+			name: "Positive Case",
+			fields: fields{
+				db:   gormDB,
+				base: nil,
+			},
+			args: args{
+				ctx:   context.Background(),
+				tx:    gormDB,
+				id:    usersId,
+				model: users,
+			},
+			mockSetup: func() {
+				//mock.ExpectExec(gormDB.ToSQL(func(tx *gorm.DB) *gorm.DB {
+				//	return tx.Model(&domain.Users{ID: usersId}).
+				//		Updates(users)
+				//})).
+				mock.ExpectExec(expectedQueryString).
+					//WithArgs(users.Email, users.Password, sqlmock.AnyArg(), usersId).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+			},
+			wantErr: false,
+		},
+		{
+			name: "Negative Case",
+			fields: fields{
+				db:   gormDB,
+				base: nil,
+			},
+			args: args{
+				ctx:   context.Background(),
+				tx:    gormDB,
+				id:    usersId,
+				model: users,
+			},
+			mockSetup: func() {
+				mock.ExpectExec(expectedQueryString).
+					WithArgs(users.Email, users.Password, sqlmock.AnyArg(), usersId).
+					WillReturnError(errors.New("db error"))
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := usersRepo
+			tt.mockSetup()
+			if err := r.Update(tt.args.ctx, tt.args.tx, tt.args.id, tt.args.model); (err != nil) != tt.wantErr {
+				t.Errorf("Update() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
 }

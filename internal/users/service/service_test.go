@@ -1,14 +1,18 @@
 package service_test
 
 import (
+	"boiler-plate/app/appconf"
 	"boiler-plate/internal/base/app"
 	submissionsDomain "boiler-plate/internal/submissions/domain"
 	submissionsMock "boiler-plate/internal/submissions/mocks"
+	SubmissionsRepo "boiler-plate/internal/submissions/repository"
 	"boiler-plate/internal/users/domain"
 	"boiler-plate/internal/users/mocks"
+	"boiler-plate/internal/users/repository"
 	"boiler-plate/internal/users/service"
 	"boiler-plate/pkg/db"
 	"boiler-plate/pkg/exception"
+	"context"
 	"errors"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/go-playground/validator/v10"
@@ -666,4 +670,135 @@ func TestFindUsers(t *testing.T) {
 		assert.Equal(t, 1, len(result.Data))
 		assert.Equal(t, 1, result.Data[0].ID)
 	})
+}
+
+func Test_service_Create(t *testing.T) {
+	mockSql, gormDB := setupSQLMock(t)
+	type fields struct {
+		DB              *gorm.DB
+		config          *appconf.Config
+		UsersRepo       repository.UsersRepository
+		SubmissionsRepo SubmissionsRepo.SubmissionsRepository
+		validate        *validator.Validate
+	}
+	type args struct {
+		ctx context.Context
+		req *domain.Users
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		mock   func(fields fields, args args)
+		want   *exception.Exception
+	}{
+		{
+			name: "CreateUsers Failed Repository",
+			fields: fields{
+				DB:              gormDB, // setupGormDB is a hypothetical function for setting up GORM DB
+				UsersRepo:       new(mocks.UsersRepository),
+				SubmissionsRepo: new(submissionsMock.SubmissionsRepository),
+				validate:        validator.New(),
+			},
+			args: args{
+				ctx: context.TODO(),
+				req: &domain.Users{
+					Email:    "Zinedine",
+					Password: "test",
+				},
+			},
+			mock: func(f fields, a args) {
+				mockSql.ExpectBegin()
+				mockSql.ExpectRollback()
+				f.UsersRepo.(*mocks.UsersRepository).On("Create", a.ctx, mock.Anything, a.req).Return(errors.New("test error"))
+			},
+			want: exception.Internal("error inserting users", errors.New("test error")),
+		},
+		{
+			name: "CreateUsers InvalidInput Validator",
+			fields: fields{
+				DB:              gormDB,
+				UsersRepo:       new(mocks.UsersRepository),
+				SubmissionsRepo: new(submissionsMock.SubmissionsRepository),
+				validate:        validator.New(),
+			},
+			args: args{
+				ctx: context.TODO(),
+				req: &domain.Users{
+					Email:    "Z",
+					Password: "test",
+				},
+			},
+			mock: func(f fields, a args) {
+				mockSql.ExpectBegin()
+				mockSql.ExpectRollback()
+				f.UsersRepo.(*mocks.UsersRepository).On("Create", a.ctx, mock.Anything, a.req).Return(nil)
+			},
+			want: exception.InvalidArgument(validator.New().Struct(&domain.Users{
+				Email:    "Z",
+				Password: "test",
+			})),
+		},
+		{
+			name: "CreateUsers Commit Error",
+			fields: fields{
+				DB:              gormDB,
+				UsersRepo:       new(mocks.UsersRepository),
+				SubmissionsRepo: new(submissionsMock.SubmissionsRepository),
+				validate:        validator.New(),
+			},
+			args: args{
+				ctx: context.TODO(),
+				req: &domain.Users{
+					Email:    "Zinedine",
+					Password: "test",
+				},
+			},
+			mock: func(f fields, a args) {
+				mockSql.ExpectBegin()
+				mockSql.ExpectCommit().WillReturnError(errors.New("commit error"))
+				f.UsersRepo.(*mocks.UsersRepository).On("Create", a.ctx, mock.Anything, a.req).Return(nil)
+			},
+			want: exception.Internal("commit transaction", errors.New("commit error")),
+		},
+		{
+			name: "CreateUsers ValidInput Validator",
+			fields: fields{
+				DB:              gormDB,
+				UsersRepo:       new(mocks.UsersRepository),
+				SubmissionsRepo: new(submissionsMock.SubmissionsRepository),
+				validate:        validator.New(),
+			},
+			args: args{
+				ctx: context.TODO(),
+				req: &domain.Users{
+					Email:    "Zinedine",
+					Password: "test",
+				},
+			},
+			mock: func(f fields, a args) {
+				mockSql.ExpectBegin()
+				mockSql.ExpectCommit()
+				f.UsersRepo.(*mocks.UsersRepository).On("Create", a.ctx, mock.Anything, a.req).Return(nil)
+			},
+			want: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, gormDB := setupSQLMock(t)
+			tt.fields.DB = gormDB
+			tt.mock(tt.fields, tt.args)
+			//s := service.Service{
+			//	DB:              tt.fields.DB,
+			//	config:          tt.fields.config,
+			//	UsersRepo:       tt.fields.UsersRepo,
+			//	SubmissionsRepo: tt.fields.SubmissionsRepo,
+			//	validate:        tt.fields.validate,
+			//}
+			s := service.NewService(nil, tt.fields.UsersRepo, tt.fields.SubmissionsRepo, tt.fields.DB, tt.fields.validate)
+			assert.Equalf(t, tt.want, s.Create(tt.args.ctx, tt.args.req), "Create(%v, %v)", tt.args.ctx, tt.args.req)
+		})
+	}
 }

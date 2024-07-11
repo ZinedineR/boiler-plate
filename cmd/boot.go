@@ -1,13 +1,8 @@
 package cmd
 
 import (
-	"boiler-plate/internal/base/handler"
-	"fmt"
-	"io"
-	"log"
-	"os"
-
 	appConfiguration "boiler-plate/app/appconf"
+	"boiler-plate/internal/base/handler"
 	subHandler "boiler-plate/internal/submissions/handler"
 	SubmissionsRepo "boiler-plate/internal/submissions/repository"
 	SubmissionsService "boiler-plate/internal/submissions/service"
@@ -18,6 +13,10 @@ import (
 	"boiler-plate/pkg/httpclient"
 	"boiler-plate/pkg/migration"
 	"boiler-plate/pkg/xvalidator"
+	"fmt"
+	"io"
+	"log"
+	"os"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
@@ -34,12 +33,25 @@ var (
 	validate           *validator.Validate
 	httpClient         httpclient.Client
 	xvalidate          *xvalidator.Validator
+	grpcHandler        *handler.GRPCHandler
+	usersGrpcHandler   *tempHandler.GRPCHandler
 )
 
 func initHttpclient() {
 	httpClientFactory := httpclient.New()
 	httpClient = httpClientFactory.CreateClient()
 }
+
+//func initGRPC() {
+//	//grpcHandler = handler.NewGRPCHandler(pb.UnimplementedGreeterServer{})
+//	grpcHandler = &handler.GRPCHandler{
+//		UnimplementedGreeterServer: pb.UnimplementedGreeterServer{},
+//	}
+//	usersGrpcHandler = &tempHandler.GRPCHandler{
+//		UnimplementedServiceServer: users.UnimplementedServiceServer{},
+//		UsersService:               nil,
+//	}
+//}
 
 func initHTTP() {
 	initValidator()
@@ -48,14 +60,15 @@ func initHTTP() {
 
 	// appConf.MysqlTZ = postgresClientRepo.TZ
 
-	baseHandler = handler.NewBaseHTTPHandler(sqlClientRepo.DB, appConf, sqlClientRepo, httpClient)
+	baseHandler = handler.NewBaseHTTPHandler(sqlClientRepo.DB, appConf, sqlClientRepo, httpClient, grpcHandler)
 
 	UsersRepo := UsersRepo.NewRepository(sqlClientRepo.DB, sqlClientRepo)
 	SubsRepo := SubmissionsRepo.NewRepository(sqlClientRepo.DB, sqlClientRepo)
 
 	UsersService := UsersService.NewService(appConf, UsersRepo, SubsRepo, sqlClientRepo.DB, validate)
 	SubsService := SubmissionsService.NewService(appConf, SubsRepo, sqlClientRepo.DB, validate)
-	UsersHandler = tempHandler.NewHTTPHandler(baseHandler, UsersService)
+	usersGrpcHandler = tempHandler.NewGRPCHandler(UsersService)
+	UsersHandler = tempHandler.NewHTTPHandler(baseHandler, usersGrpcHandler, UsersService)
 	SubmissionsHandler = subHandler.NewHTTPHandler(baseHandler, SubsService)
 
 }

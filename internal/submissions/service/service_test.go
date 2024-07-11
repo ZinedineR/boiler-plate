@@ -50,7 +50,7 @@ func TestNewService(t *testing.T) {
 func TestCreateSubmission(t *testing.T) {
 	mockAppCtx := &app.Context{}
 	//invalidArgumentErrorTemplate := exception.InvalidArgument(errors.New("validation error"))
-	//internalMarshallingErrorTemplate := exception.Internal("error marshalling old value", errors.New("json error"))
+	internalMarshallingErrorTemplate := exception.Internal("error marshalling old value", errors.New("json error"))
 	internalInsertErrorTemplate := exception.Internal("error inserting submissions", errors.New("insert error"))
 	commitErrorTemplate := exception.Internal("commit transaction", errors.New("commit error"))
 
@@ -82,25 +82,25 @@ func TestCreateSubmission(t *testing.T) {
 		assert.Equal(t, errorValidator, errService)
 	})
 
-	//t.Run("CreateSubmission Marshalling Error", func(t *testing.T) {
-	//	mockSql, gormDB := setupSQLMock(t)
-	//	mockRepository := new(mocks.SubmissionsRepository)
-	//	validate := validator.New()
-	//
-	//	request := validRequest
-	//	mockRepository.On("Create", mockAppCtx, mock.Anything, mock.Anything).Return(nil)
-	//	mockService := service.NewService(nil, mockRepository, gormDB, validate)
-	//	mockSql.ExpectBegin()
-	//	mockSql.ExpectRollback()
-	//	// Simulate marshalling error by setting an invalid value in Answers
-	//	request.Answers = []struct {
-	//		QuestionId int    `json:"question_id"`
-	//		Answer     string `json:"answer"`
-	//	}{{QuestionId: 1, Answer: string([]byte{0xff})}} // Invalid UTF-8 sequence
-	//	err := mockService.Create(mockAppCtx, request)
-	//	assert.NotNil(t, err)
-	//	assert.Equal(t, internalMarshallingErrorTemplate, err)
-	//})
+	t.Run("CreateSubmission Marshalling Error", func(t *testing.T) {
+		mockSql, gormDB := setupSQLMock(t)
+		mockRepository := new(mocks.SubmissionsRepository)
+		validate := validator.New()
+
+		request := validRequest
+		mockRepository.On("Create", mockAppCtx, mock.Anything, mock.Anything).Return(nil)
+		mockService := service.NewService(nil, mockRepository, gormDB, validate)
+		mockSql.ExpectBegin()
+		mockSql.ExpectRollback()
+		// Simulate marshalling error by setting an invalid value in Answers
+		request.Answers = []struct {
+			QuestionId int    `json:"question_id"`
+			Answer     string `json:"answer"`
+		}{{QuestionId: 1, Answer: string([]byte{0xff})}} // Invalid UTF-8 sequence
+		err := mockService.Create(mockAppCtx, request)
+		assert.NotNil(t, err)
+		assert.Equal(t, internalMarshallingErrorTemplate, err)
+	})
 
 	t.Run("CreateSubmission Insert Error", func(t *testing.T) {
 		mockSql, gormDB := setupSQLMock(t)
