@@ -3,12 +3,13 @@ package cmd
 import (
 	appConfiguration "boiler-plate/app/appconf"
 	"boiler-plate/internal/base/handler"
-	subHandler "boiler-plate/internal/submissions/handler"
-	SubmissionsRepo "boiler-plate/internal/submissions/repository"
-	SubmissionsService "boiler-plate/internal/submissions/service"
+	transHandler "boiler-plate/internal/transaction/handler"
+	TransactionRepo "boiler-plate/internal/transaction/repository"
+	TransactionService "boiler-plate/internal/transaction/service"
 	tempHandler "boiler-plate/internal/users/handler"
 	UsersRepo "boiler-plate/internal/users/repository"
 	UsersService "boiler-plate/internal/users/service"
+	WalletRepo "boiler-plate/internal/wallet/repository"
 	"boiler-plate/pkg/db"
 	"boiler-plate/pkg/httpclient"
 	"boiler-plate/pkg/migration"
@@ -25,16 +26,17 @@ import (
 )
 
 var (
-	appConf            *appConfiguration.Config
-	baseHandler        *handler.BaseHTTPHandler
-	UsersHandler       *tempHandler.HTTPHandler
-	SubmissionsHandler *subHandler.HTTPHandler
-	sqlClientRepo      *db.SQLClientRepository
-	validate           *validator.Validate
-	httpClient         httpclient.Client
-	xvalidate          *xvalidator.Validator
-	grpcHandler        *handler.GRPCHandler
-	usersGrpcHandler   *tempHandler.GRPCHandler
+	appConf                *appConfiguration.Config
+	baseHandler            *handler.BaseHTTPHandler
+	UsersHandler           *tempHandler.HTTPHandler
+	TransactionHandler     *transHandler.HTTPHandler
+	sqlClientRepo          *db.SQLClientRepository
+	validate               *validator.Validate
+	httpClient             httpclient.Client
+	xvalidate              *xvalidator.Validator
+	grpcHandler            *handler.GRPCHandler
+	usersGrpcHandler       *tempHandler.GRPCHandler
+	transactionGrpcHandler *transHandler.GRPCHandler
 )
 
 func initHttpclient() {
@@ -62,14 +64,18 @@ func initHTTP() {
 
 	baseHandler = handler.NewBaseHTTPHandler(sqlClientRepo.DB, appConf, sqlClientRepo, httpClient, grpcHandler)
 
-	UsersRepo := UsersRepo.NewRepository(sqlClientRepo.DB, sqlClientRepo)
-	SubsRepo := SubmissionsRepo.NewRepository(sqlClientRepo.DB, sqlClientRepo)
+	UsersRepository := UsersRepo.NewRepository(sqlClientRepo.DB, sqlClientRepo)
+	WalletRepository := WalletRepo.NewRepository(sqlClientRepo.DB, sqlClientRepo)
+	TransactionRepository := TransactionRepo.NewRepository(sqlClientRepo.DB, sqlClientRepo)
 
-	UsersService := UsersService.NewService(appConf, UsersRepo, SubsRepo, sqlClientRepo.DB, validate)
-	SubsService := SubmissionsService.NewService(appConf, SubsRepo, sqlClientRepo.DB, validate)
-	usersGrpcHandler = tempHandler.NewGRPCHandler(UsersService)
-	UsersHandler = tempHandler.NewHTTPHandler(baseHandler, usersGrpcHandler, UsersService)
-	SubmissionsHandler = subHandler.NewHTTPHandler(baseHandler, SubsService)
+	UsersServiceInit := UsersService.NewService(appConf, UsersRepository, WalletRepository, sqlClientRepo.DB, validate)
+	TransactionServiceInit := TransactionService.NewService(appConf, TransactionRepository, UsersRepository, WalletRepository, sqlClientRepo.DB, validate)
+
+	usersGrpcHandler = tempHandler.NewGRPCHandler(UsersServiceInit)
+	UsersHandler = tempHandler.NewHTTPHandler(baseHandler, usersGrpcHandler, UsersServiceInit)
+
+	transactionGrpcHandler = transHandler.NewGRPCHandler(TransactionServiceInit)
+	TransactionHandler = transHandler.NewHTTPHandler(baseHandler, transactionGrpcHandler, TransactionServiceInit)
 
 }
 

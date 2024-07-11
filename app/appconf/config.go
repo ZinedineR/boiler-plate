@@ -8,13 +8,10 @@ import (
 )
 
 type Config struct {
-	AppEnvConfig              *AppConfig
-	DatabaseConfig            *DatabaseConfig
-	KafkaConfig               *KafkaConfig
-	AuthConfig                *AuthConfig
-	NotificationServiceConfig *NotificationServiceConfig
-	OTPConfig                 *OTPConfig
-	CustomerServiceConfig     *CustomerServiceConfig
+	AppEnvConfig   *AppConfig
+	DatabaseConfig *DatabaseConfig
+	//KafkaConfig               *KafkaConfig
+	AuthConfig *AuthConfig
 }
 
 func (c Config) IsStaging() bool {
@@ -32,13 +29,9 @@ func (c Config) IsDebug() bool {
 func InitAppConfig(validate *xvalidator.Validator) *Config {
 
 	c := Config{
-		AppEnvConfig:              AppConfigInit(),
-		DatabaseConfig:            DatabaseConfigInit(),
-		KafkaConfig:               KafkaConfigInit(),
-		AuthConfig:                AuthConfigInit(),
-		NotificationServiceConfig: NotificationServiceConfigInit(),
-		OTPConfig:                 OTPConfigInit(),
-		CustomerServiceConfig:     CustomerServiceConfigInit(),
+		AppEnvConfig:   AppConfigInit(),
+		DatabaseConfig: DatabaseConfigInit(),
+		AuthConfig:     AuthConfigInit(),
 	}
 
 	// NOTIFICATION SERVICE CONFIG

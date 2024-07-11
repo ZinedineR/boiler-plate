@@ -2,8 +2,16 @@ syntax = "proto3";
 import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
 option go_package = "boiler-plate/proto/users/v1;users";
-
+import "protoc-gen-openapiv2/options/annotations.proto";
 package proto.users.v1;
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "User Service",
+    version: "v1",
+    description: "User service handle API for CRUD users"
+  },
+  host: "localhost:8080",
+};
 
 service Service {
   rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {
@@ -37,14 +45,23 @@ service Service {
 
 message Users {
   int32 id = 1;                            // Go int to ProtoBuf int32
-  string email = 2;                        // Go string to ProtoBuf string
-  string password = 3;                     // Go string to ProtoBuf string
-  google.protobuf.Timestamp created_at = 4; // Go *time.Time to ProtoBuf Timestamp
-  google.protobuf.Timestamp updated_at = 5; // Go *time.Time to ProtoBuf Timestamp
+  string name = 2;
+  string email = 3;                        // Go string to ProtoBuf string
+  string password = 4;                     // Go string to ProtoBuf string
+  google.protobuf.Timestamp created_at = 5; // Go *time.Time to ProtoBuf Timestamp
+  google.protobuf.Timestamp updated_at = 6; // Go *time.Time to ProtoBuf Timestamp
+  int32 wallet_id =7;
+  Wallet wallet=8;
+}
+
+message Wallet {
+  int32 id = 1;                            // Go int to ProtoBuf int32
+  double balance = 2;
+  google.protobuf.Timestamp last_transaction = 3; // Go *time.Time to ProtoBuf Timestamp
 }
 
 message CreateUserRequest{
-  int32 id = 1;
+  string name = 1;
   string email = 2;                        // Go string to ProtoBuf string
   string password = 3;                     // Go string to ProtoBuf string
 }
@@ -56,8 +73,9 @@ message CreateUserResponse{
 
 message UpdateUserRequest{
   string id = 1;
-  string email = 2;                        // Go string to ProtoBuf string
-  string password = 3;                     // Go string to ProtoBuf string
+  string name = 2;
+  string email = 3;                        // Go string to ProtoBuf string
+  string password = 4;                     // Go string to ProtoBuf string
 }
 
 message UpdateUserResponse{

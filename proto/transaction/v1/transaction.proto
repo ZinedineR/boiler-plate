@@ -1,0 +1,103 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "proto/users/v1/users.proto";
+option go_package = "boiler-plate/proto/transaction/v1;transaction";
+package proto.transaction.v1;
+import "google/protobuf/wrappers.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "Transaction Service",
+    version: "v1",
+    description: "Transaction service handle API for Debit, Credit and list transactions"
+  },
+  host: "localhost:8080",
+};
+service Service {
+  rpc CreditTransaction (CreditTransactionRequest) returns (CreditTransactionResponse) {
+    option (google.api.http) = {
+      post: "/api/v2/transaction"
+      body: "*"
+    };
+  };
+  rpc TransferTransaction (TransferTransactionRequest) returns (TransferTransactionResponse) {
+    option (google.api.http) = {
+      put: "/api/v2/transaction"
+      body: "*"
+    };
+  };
+  rpc DetailTransaction (DetailTransactionRequest) returns (DetailTransactionResponse) {
+    option (google.api.http) = {
+      get: "/api/v2/transaction/{id}"
+    };
+  }
+  rpc GetTransaction (GetTransactionRequest) returns (GetTransactionResponse) {
+    option (google.api.http) = {
+      get: "/api/v2/transaction"
+    };
+  }
+}
+
+message Transactions {
+  int32 id = 1;                            // Go int to ProtoBuf int32
+  string type = 2;
+  double amount = 3;
+  string message = 4;
+  google.protobuf.Int32Value userid = 5;                        // Go string to ProtoBuf string
+  proto.users.v1.Users users = 6;                     // Go Users
+  google.protobuf.Timestamp transaction_time = 7; // Go *time.Time to ProtoBuf Timestamp
+}
+
+message CreditTransactionRequest{
+  string userid = 1;
+  double amount = 2;                        // Go string to ProtoBuf float64
+}
+
+message CreditTransactionResponse{
+  MutationResponse response = 1;
+}
+
+message TransferTransactionRequest{
+  string senderid = 1;
+  string receiverid = 2;
+  double amount = 3;
+}
+
+message TransferTransactionResponse{
+  MutationResponse response = 1;
+}
+
+message GetTransactionRequest{
+  string page = 1;
+  string limit= 2;
+  string userid=3;
+}
+
+message GetTransactionResponse{
+  PaginationResponse Pagination = 1;
+  proto.users.v1.Users users = 2;
+  repeated Transactions transaction = 3; //Response transaction
+  MutationResponse response = 4;
+}
+message DetailTransactionRequest {
+  string id = 1; // Request id 
+}
+
+message DetailTransactionResponse {
+  Transactions transaction = 1; // Response
+  MutationResponse response = 2;
+}
+
+message PaginationResponse {
+  int32 limit = 1;
+  int32 page = 2;
+  int32 total_rows = 3;
+  int32 total_pages =4;
+}
+
+
+message MutationResponse {
+  string message = 1;
+}

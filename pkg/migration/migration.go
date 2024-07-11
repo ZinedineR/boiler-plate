@@ -1,8 +1,9 @@
 package migration
 
 import (
-	submissionDomain "boiler-plate/internal/submissions/domain"
+	transactionDomain "boiler-plate/internal/transaction/domain"
 	"boiler-plate/internal/users/domain"
+	walletDomain "boiler-plate/internal/wallet/domain"
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -20,12 +21,15 @@ func Initmigrate(db *gorm.DB) {
 
 	// Migrate rest of the models
 	logrus.Println(fmt.Println("AutoMigrate Model [table_name]"))
+	db.AutoMigrate(&walletDomain.Wallet{})
+	logrus.Infoln(fmt.Println("  TableModel [" +
+		(&walletDomain.Wallet{}).TableName() + "]"))
 	db.AutoMigrate(&domain.Users{})
 	logrus.Infoln(fmt.Println("  TableModel [" +
 		(&domain.Users{}).TableName() + "]"))
-	db.AutoMigrate(&submissionDomain.Submissions{})
+	db.AutoMigrate(&transactionDomain.Transaction{})
 	logrus.Infoln(fmt.Println("  TableModel [" +
-		(&submissionDomain.Submissions{}).TableName() + "]"))
+		(&transactionDomain.Transaction{}).TableName() + "]"))
 }
 
 func executePendingMigrations(db *gorm.DB) {

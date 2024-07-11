@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"boiler-plate/internal/base/handler"
-	subHandler "boiler-plate/internal/submissions/handler"
+	transHandler "boiler-plate/internal/transaction/handler"
 	tempHandler "boiler-plate/internal/users/handler"
 	"boiler-plate/pkg/server"
 
@@ -22,41 +22,52 @@ import (
 )
 
 type HttpServe struct {
-	router             *gin.Engine
-	base               *handler.BaseHTTPHandler
-	UsersHandler       *tempHandler.HTTPHandler
-	SubmissionsHandler *subHandler.HTTPHandler
-	GRPCServer         *grpc.Server
-	GRPCGateway        *runtime.ServeMux
+	router                *gin.Engine
+	base                  *handler.BaseHTTPHandler
+	UsersHandler          *tempHandler.HTTPHandler
+	TransactionHandler    *transHandler.HTTPHandler
+	GRPCUserServer        *grpc.Server
+	GRPCTransactionServer *grpc.Server
+	GRPCGateway           *runtime.ServeMux
 }
 
 func (h *HttpServe) Run(config *appconf.Config) error {
 	//h.setupUsersRouter()
 	//h.setupDevRouter(config)
-	h.setupGRPCRouter()
+	h.setupGRPCUserRouter()
+	h.setupGRPCTransactionRouter()
 	h.base.Handlers = h
 	//if h.base.IsStaging() {
 	//	h.setupDevRouter()
 	//}
-	//conn, err := net.Listen("tcp", ":"+config.AppEnvConfig.HttpPort)
-	conn, err := net.Listen("tcp", ":50051")
+	userConnection, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatal(err)
 	}
 	go func() {
-		if err := h.GRPCServer.Serve(conn); err != nil {
+		if err := h.GRPCUserServer.Serve(userConnection); err != nil {
 			log.Fatalf("failed to serve: %v", err)
 		}
 	}()
+	transactionConnection, err := net.Listen("tcp", ":50052")
+	if err != nil {
+		log.Fatal(err)
+	}
+	go func() {
+		if err := h.GRPCTransactionServer.Serve(transactionConnection); err != nil {
+			log.Fatalf("failed to serve: %v", err)
+		}
+	}()
+
 	time.Sleep(time.Second)
-	h.setupGRPCGateway()
+	h.setupGRPCUserGateway()
+	h.setupGRPCTransactionGateway()
 	return h.router.Run(fmt.Sprintf(":%s", config.AppEnvConfig.HttpPort))
 }
 
 func New(
 	appName string, base *handler.BaseHTTPHandler,
-	Users *tempHandler.HTTPHandler,
-	Submissions *subHandler.HTTPHandler,
+	Users *tempHandler.HTTPHandler, Trans *transHandler.HTTPHandler,
 ) server.App {
 
 	if os.Getenv("APP_ENV") != "production" {
@@ -86,14 +97,16 @@ func New(
 		AllowHeaders:     base.AppConfig.AppEnvConfig.AllowHeaders,
 		AllowCredentials: true,
 	}))
-	grpcServer := grpc.NewServer()
+	grpcUserServer := grpc.NewServer()
+	grpcTransactionServer := grpc.NewServer()
 	grpcGatewayMux := runtime.NewServeMux()
 	return &HttpServe{
-		router:             r,
-		base:               base,
-		UsersHandler:       Users,
-		SubmissionsHandler: Submissions,
-		GRPCServer:         grpcServer,
-		GRPCGateway:        grpcGatewayMux,
+		router:                r,
+		base:                  base,
+		UsersHandler:          Users,
+		TransactionHandler:    Trans,
+		GRPCUserServer:        grpcUserServer,
+		GRPCTransactionServer: grpcTransactionServer,
+		GRPCGateway:           grpcGatewayMux,
 	}
 }

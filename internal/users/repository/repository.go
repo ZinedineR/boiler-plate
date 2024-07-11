@@ -40,6 +40,7 @@ func (r Repo) Delete(ctx context.Context, tx *gorm.DB, key int) error {
 func (r Repo) Update(ctx context.Context, tx *gorm.DB, id int, model *domain.Users) error {
 	query := tx.WithContext(ctx)
 	if err := query.
+		Omit("wallet_id").
 		Model(&domain.Users{ID: id}).
 		Updates(model).
 		Error; err != nil {
@@ -49,13 +50,12 @@ func (r Repo) Update(ctx context.Context, tx *gorm.DB, id int, model *domain.Use
 }
 
 func (r Repo) Find(ctx context.Context, tx *gorm.DB, limit, page int) (
-	*[]domain.UserResponse, *baseModel.Paginate, error,
+	*[]domain.Users, *baseModel.Paginate, error,
 ) {
 	var (
-		models *[]domain.UserResponse
+		models *[]domain.Users
 	)
-	tx = tx.WithContext(ctx).
-		Select("id", "email", "password", "created_at", "updated_at").
+	tx = tx.WithContext(ctx).Preload("Wallet").
 		Model(&domain.Users{})
 	pagination := baseModel.NewPaginate(limit, page)
 	if err := tx.
@@ -70,33 +70,15 @@ func (r Repo) Find(ctx context.Context, tx *gorm.DB, limit, page int) (
 	return models, pagination, nil
 }
 
-func (r Repo) Detail(ctx context.Context, tx *gorm.DB, id int) (*domain.UserResponse, error) {
-	var (
-		models *domain.UserResponse
-	)
-
-	if err := tx.WithContext(ctx).
-		Select("id", "email", "password", "created_at", "updated_at").
-		Model(&domain.Users{}).
-		First(&models, id).
-		Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return models, nil
-}
-
-func (r Repo) Auth(ctx context.Context, tx *gorm.DB, users, password string) (*domain.Users, error) {
+func (r Repo) Detail(ctx context.Context, tx *gorm.DB, id int) (*domain.Users, error) {
 	var (
 		models *domain.Users
 	)
 
 	if err := tx.WithContext(ctx).
+		Preload("Wallet").
 		Model(&domain.Users{}).
-		Where("email = ?", users).Where("password = ?", password).
-		First(&models).
+		First(&models, id).
 		Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil

@@ -1,0 +1,30 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "proto/helloworld/v1/helloworld.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "proto.helloworld.v1.Service"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "proto.helloworld.v1.SayHelloResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "title": "Pesan greeting"
+        }
+      }
+    }
+  }
+}

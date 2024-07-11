@@ -36,10 +36,10 @@ func (h HTTPHandler) Create(ctx *app.Context) *server.ResponseInterface {
 		return h.App.AsJsonInterface(ctx, http.StatusBadRequest, resException)
 	}
 
-	if err := h.UsersService.Create(ctx, &request); err != nil {
-		responseException := httputils.GenErrorResponseException(err)
-		return h.App.AsJsonInterface(ctx, responseException.StatusCode, responseException)
-	}
+	//if err := h.UsersService.Create(ctx, &request); err != nil {
+	//	responseException := httputils.GenErrorResponseException(err)
+	//	return h.App.AsJsonInterface(ctx, responseException.StatusCode, responseException)
+	//}
 	return h.App.AsJsonInterface(ctx, http.StatusOK, httputils.DataSuccessResponse{
 		StatusCode: http.StatusOK,
 		Message:    "success created",
@@ -48,7 +48,7 @@ func (h HTTPHandler) Create(ctx *app.Context) *server.ResponseInterface {
 }
 
 func (h HTTPHandler) Update(ctx *app.Context) *server.ResponseInterface {
-	id := ctx.Param("id")
+	//id := ctx.Param("id")
 	// Binding JSON
 	request := domain.Users{}
 	if err := ctx.ShouldBindJSON(&request); err != nil {
@@ -58,11 +58,11 @@ func (h HTTPHandler) Update(ctx *app.Context) *server.ResponseInterface {
 	}
 
 	// Exec Service
-	errException := h.UsersService.Update(ctx, id, &request)
-	if errException != nil {
-		responseException := httputils.GenErrorResponseException(errException)
-		return h.App.AsJsonInterface(ctx, responseException.StatusCode, responseException)
-	}
+	//errException := h.UsersService.Update(ctx, id, &request)
+	//if errException != nil {
+	//	responseException := httputils.GenErrorResponseException(errException)
+	//	return h.App.AsJsonInterface(ctx, responseException.StatusCode, responseException)
+	//}
 
 	// return
 	return h.App.AsJsonInterface(ctx, http.StatusOK, httputils.DataSuccessResponse{

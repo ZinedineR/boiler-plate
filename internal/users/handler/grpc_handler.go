@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"boiler-plate/internal/users/domain"
 	"boiler-plate/internal/users/service"
 	users "boiler-plate/proto/users/v1"
 	"context"
@@ -21,20 +20,20 @@ func NewGRPCHandler(service service.Service) *GRPCHandler {
 }
 
 func (s *GRPCHandler) CreateUser(ctx context.Context, in *users.CreateUserRequest) (*users.CreateUserResponse, error) {
-	body := &domain.Users{
+	body := &service.UserRequest{
+		Name:     in.GetName(),
 		Email:    in.GetEmail(),
 		Password: in.GetPassword(),
 	}
 	if err := s.UsersService.Create(ctx, body); err != nil {
-		return nil, err.Error
+		return nil, status.Error(codes.Code(err.GetGrpcCode()), fmt.Sprint(err.Message))
 	}
 	return &users.CreateUserResponse{
 		Data: &users.Users{
-			Id:        int32(body.ID),
-			Email:     in.Email,
-			Password:  in.Password,
-			CreatedAt: timestamppb.New(*body.CreatedAt),
-			UpdatedAt: timestamppb.New(*body.UpdatedAt),
+			Id:       int32(body.Id),
+			Name:     in.Name,
+			Email:    in.Email,
+			Password: in.Password,
 		},
 		Response: &users.MutationResponse{Message: "Create User Success"},
 	}, nil
@@ -44,14 +43,21 @@ func (s *GRPCHandler) GetUser(ctx context.Context, in *users.GetUserRequest) (*u
 
 	result, err := s.UsersService.Find(ctx, in.GetLimit(), in.GetPage())
 	if err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("get user error: %v", err))
+		return nil, status.Error(codes.Code(err.GetGrpcCode()), fmt.Sprint(err.Message))
 	}
 	var usersProto []*users.Users
 	for _, dataUser := range result.Data {
 		usersProto = append(usersProto, &users.Users{
-			Id:        int32(dataUser.ID),
-			Email:     dataUser.Email,
-			Password:  dataUser.Password,
+			Id:       int32(dataUser.ID),
+			Name:     dataUser.Name,
+			Email:    dataUser.Email,
+			Password: dataUser.Password,
+			WalletId: int32(dataUser.WalletId),
+			Wallet: &users.Wallet{
+				Id:              int32(dataUser.Wallet.ID),
+				Balance:         dataUser.Wallet.Balance,
+				LastTransaction: timestamppb.New(*dataUser.Wallet.LastTransaction),
+			},
 			CreatedAt: timestamppb.New(*dataUser.CreatedAt),
 			UpdatedAt: timestamppb.New(*dataUser.UpdatedAt),
 		})
@@ -69,20 +75,20 @@ func (s *GRPCHandler) GetUser(ctx context.Context, in *users.GetUserRequest) (*u
 }
 
 func (s *GRPCHandler) UpdateUser(ctx context.Context, in *users.UpdateUserRequest) (*users.UpdateUserResponse, error) {
-	body := &domain.Users{
+	body := &service.UserRequest{
+		Name:     in.GetName(),
 		Email:    in.GetEmail(),
 		Password: in.GetPassword(),
 	}
 	if err := s.UsersService.Update(ctx, in.GetId(), body); err != nil {
-		return nil, err.Error
+		return nil, status.Error(codes.Code(err.GetGrpcCode()), fmt.Sprint(err.Message))
 	}
 	return &users.UpdateUserResponse{
 		Data: &users.Users{
-			Id:        int32(body.ID),
-			Email:     in.Email,
-			Password:  in.Password,
-			CreatedAt: timestamppb.New(*body.CreatedAt),
-			UpdatedAt: timestamppb.New(*body.UpdatedAt),
+			Id:       int32(body.Id),
+			Name:     in.Name,
+			Email:    in.Email,
+			Password: in.Password,
 		},
 		Response: &users.MutationResponse{Message: "Create User Success"},
 	}, nil
@@ -91,13 +97,20 @@ func (s *GRPCHandler) UpdateUser(ctx context.Context, in *users.UpdateUserReques
 func (s *GRPCHandler) DetailUser(ctx context.Context, in *users.DetailUserRequest) (*users.DetailUserResponse, error) {
 	result, err := s.UsersService.Detail(ctx, in.GetId())
 	if err != nil {
-		return nil, err.Error
+		return nil, status.Error(codes.Code(err.GetGrpcCode()), fmt.Sprint(err.Message))
 	}
 	return &users.DetailUserResponse{
 		User: &users.Users{
-			Id:        int32(result.ID),
-			Email:     result.Email,
-			Password:  result.Password,
+			Id:       int32(result.ID),
+			Name:     result.Name,
+			Email:    result.Email,
+			Password: result.Password,
+			WalletId: int32(result.WalletId),
+			Wallet: &users.Wallet{
+				Id:              int32(result.Wallet.ID),
+				Balance:         result.Wallet.Balance,
+				LastTransaction: timestamppb.New(*result.Wallet.LastTransaction),
+			},
 			CreatedAt: timestamppb.New(*result.CreatedAt),
 			UpdatedAt: timestamppb.New(*result.UpdatedAt),
 		},
@@ -106,7 +119,7 @@ func (s *GRPCHandler) DetailUser(ctx context.Context, in *users.DetailUserReques
 
 func (s *GRPCHandler) DeleteUser(ctx context.Context, in *users.DeleteUserRequest) (*users.DeleteUserResponse, error) {
 	if err := s.UsersService.Delete(ctx, in.GetId()); err != nil {
-		return nil, err.Error
+		return nil, status.Error(codes.Code(err.GetGrpcCode()), fmt.Sprint(err.Message))
 	}
 	return &users.DeleteUserResponse{
 		Response: &users.MutationResponse{Message: "Delete User Success"},
