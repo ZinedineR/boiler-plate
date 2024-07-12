@@ -19,22 +19,12 @@ var HttpCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		initHTTP()
 
-		// running open telemetry
-		// cleanup := initTracer()
-		// defer cleanup(context.Background())
 		app := api.New(appConf.AppEnvConfig.AppName, baseHandler, UsersHandler, TransactionHandler)
 
 		echan := make(chan error)
 		go func() {
 			echan <- app.Run(appConf)
 		}()
-
-		//go func() {
-		//	if err := serverio.Serve(); err != nil {
-		//		logrus.Fatalf("socketio listen error: %s\n", err)
-		//	}
-		//}()
-		//defer serverio.Close()
 
 		term := make(chan os.Signal, 1)
 		signal.Notify(term, os.Interrupt, syscall.SIGTERM)

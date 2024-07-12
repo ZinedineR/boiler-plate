@@ -28,11 +28,6 @@ func init() {
 		if os.Getenv("APP_ENV") == "development" {
 			logrus.Println("unable to load environment variable", err.Error())
 		} else {
-			// fin, err := os.Open("./.env.example")
-			// if err != nil {
-			// 	log.Fatal(err)
-			// }
-			// defer fin.Close()
 
 			fout, err := os.Create("./.env")
 			if err != nil {
@@ -40,11 +35,6 @@ func init() {
 			}
 			defer fout.Close()
 
-			// _, err = io.Copy(fout, fin)
-
-			// if err != nil {
-			// 	logrus.Warningln("Can't find env.file. To use system's env vars for now")s
-			// }
 		}
 	}
 }

@@ -35,7 +35,12 @@ func (s *GRPCHandler) CreditTransaction(
 func (s *GRPCHandler) GetTransaction(
 	ctx context.Context, in *transaction.GetTransactionRequest,
 ) (*transaction.GetTransactionResponse, error) {
-
+	if in.GetLimit() == "" {
+		in.Limit = "0"
+	}
+	if in.GetPage() == "" {
+		in.Page = "0"
+	}
 	result, err := s.TransactionService.Find(ctx, in.GetLimit(), in.GetPage(), in.GetUserid())
 	if err != nil {
 		return nil, status.Error(codes.Code(err.GetGrpcCode()), fmt.Sprint(err.Message))

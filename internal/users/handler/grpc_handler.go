@@ -40,7 +40,12 @@ func (s *GRPCHandler) CreateUser(ctx context.Context, in *users.CreateUserReques
 }
 
 func (s *GRPCHandler) GetUser(ctx context.Context, in *users.GetUserRequest) (*users.GetUserResponse, error) {
-
+	if in.GetLimit() == "" {
+		in.Limit = "0"
+	}
+	if in.GetPage() == "" {
+		in.Page = "0"
+	}
 	result, err := s.UsersService.Find(ctx, in.GetLimit(), in.GetPage())
 	if err != nil {
 		return nil, status.Error(codes.Code(err.GetGrpcCode()), fmt.Sprint(err.Message))
