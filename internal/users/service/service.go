@@ -5,8 +5,10 @@ import (
 	subRepo "boiler-plate/internal/submissions/repository"
 	"boiler-plate/internal/users/domain"
 	"boiler-plate/internal/users/repository"
+	"boiler-plate/internal/users/repository/redisser"
 	"boiler-plate/pkg/exception"
 	"context"
+	"encoding/json"
 	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
 	"strconv"
@@ -15,13 +17,18 @@ import (
 // NewService creates new user service
 func NewService(
 	config *appconf.Config, repo repository.UsersRepository, submissionrepo subRepo.SubmissionsRepository, db *gorm.DB,
+	redis redisser.RedisClient,
 	validate *validator.Validate,
 ) Service {
-	return &service{config: config, UsersRepo: repo, SubmissionsRepo: submissionrepo, validate: validate, DB: db}
+	return &service{
+		config: config, UsersRepo: repo, SubmissionsRepo: submissionrepo, validate: validate, DB: db,
+		RedisClient: redis,
+	}
 }
 
 type service struct {
 	DB              *gorm.DB
+	RedisClient     redisser.RedisClient
 	config          *appconf.Config
 	UsersRepo       repository.UsersRepository
 	SubmissionsRepo subRepo.SubmissionsRepository
@@ -42,6 +49,13 @@ func (s service) Create(
 	}
 	if err := tx.Commit().Error; err != nil {
 		return exception.Internal("commit transaction", err)
+	}
+	jsonData, err := json.Marshal(req)
+	if err != nil {
+		return exception.Internal("error marshalling user data", err)
+	}
+	if err := s.RedisClient.HSet(ctx, "Users", strconv.Itoa(req.ID), string(jsonData)); err != nil {
+		return exception.Internal("redis hset", err)
 	}
 	return nil
 }
@@ -65,6 +79,14 @@ func (s service) Update(
 	if err := tx.Commit().Error; err != nil {
 		return exception.Internal("commit transaction", err)
 	}
+	users.ID = idInt
+	jsonData, err := json.Marshal(users)
+	if err != nil {
+		return exception.Internal("error marshalling user data", err)
+	}
+	if err := s.RedisClient.HSet(ctx, "Users", id, string(jsonData)); err != nil {
+		return exception.Internal("redis hset", err)
+	}
 	return nil
 }
 
@@ -81,6 +103,9 @@ func (s service) Delete(ctx context.Context, id string) *exception.Exception {
 	}
 	if err := tx.Commit().Error; err != nil {
 		return exception.Internal("commit transaction", err)
+	}
+	if err := s.RedisClient.HDel(ctx, "Users", id); err != nil {
+		return exception.Internal("redis hset", err)
 	}
 	return nil
 }

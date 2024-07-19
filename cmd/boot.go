@@ -8,15 +8,19 @@ import (
 	SubmissionsService "boiler-plate/internal/submissions/service"
 	tempHandler "boiler-plate/internal/users/handler"
 	UsersRepo "boiler-plate/internal/users/repository"
+	"boiler-plate/internal/users/repository/redisser"
 	UsersService "boiler-plate/internal/users/service"
 	"boiler-plate/pkg/db"
 	"boiler-plate/pkg/httpclient"
 	"boiler-plate/pkg/migration"
 	"boiler-plate/pkg/xvalidator"
+	"context"
 	"fmt"
+	"github.com/go-redis/redis/v8"
 	"io"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
@@ -35,6 +39,7 @@ var (
 	xvalidate          *xvalidator.Validator
 	grpcHandler        *handler.GRPCHandler
 	usersGrpcHandler   *tempHandler.GRPCHandler
+	redisClient        redisser.RedisClient
 )
 
 func initHttpclient() {
@@ -65,7 +70,7 @@ func initHTTP() {
 	UsersRepo := UsersRepo.NewRepository(sqlClientRepo.DB, sqlClientRepo)
 	SubsRepo := SubmissionsRepo.NewRepository(sqlClientRepo.DB, sqlClientRepo)
 
-	UsersService := UsersService.NewService(appConf, UsersRepo, SubsRepo, sqlClientRepo.DB, validate)
+	UsersService := UsersService.NewService(appConf, UsersRepo, SubsRepo, sqlClientRepo.DB, redisClient, validate)
 	SubsService := SubmissionsService.NewService(appConf, SubsRepo, sqlClientRepo.DB, validate)
 	usersGrpcHandler = tempHandler.NewGRPCHandler(UsersService)
 	UsersHandler = tempHandler.NewHTTPHandler(baseHandler, usersGrpcHandler, UsersService)
@@ -75,6 +80,7 @@ func initHTTP() {
 
 func initInfrastructure(config *appConfiguration.Config) {
 	initSQL(config)
+	initRedis(config)
 	initHttpclient()
 	initLog()
 }
@@ -82,6 +88,24 @@ func initValidator() {
 	validate = validator.New()
 	xvalidate = xvalidator.NewValidator()
 }
+
+func initRedis(config *appConfiguration.Config) {
+	var ctx = context.TODO()
+	rdb, _ := strconv.Atoi(config.RedisConfig.Redisdatabase)
+	r := redis.NewClient(&redis.Options{
+		Addr:     fmt.Sprintf("%s:%d", config.RedisConfig.Redishost, config.RedisConfig.Redisport),
+		Password: config.RedisConfig.Redispassword,
+		DB:       rdb,
+	})
+
+	err := r.Ping(ctx).Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	redisClient = redisser.NewRedisClient(r)
+}
+
 func isProd() bool {
 	return os.Getenv("APP_ENV") == "production"
 }
