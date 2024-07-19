@@ -3,13 +3,10 @@ package cmd
 import (
 	appConfiguration "boiler-plate/app/appconf"
 	"boiler-plate/internal/base/handler"
-	subHandler "boiler-plate/internal/submissions/handler"
-	SubmissionsRepo "boiler-plate/internal/submissions/repository"
-	SubmissionsService "boiler-plate/internal/submissions/service"
-	tempHandler "boiler-plate/internal/users/handler"
-	UsersRepo "boiler-plate/internal/users/repository"
-	"boiler-plate/internal/users/repository/redisser"
-	UsersService "boiler-plate/internal/users/service"
+	urlHandler "boiler-plate/internal/url/handler"
+	URLRepo "boiler-plate/internal/url/repository"
+	"boiler-plate/internal/url/repository/redisser"
+	URLService "boiler-plate/internal/url/service"
 	"boiler-plate/pkg/db"
 	"boiler-plate/pkg/httpclient"
 	"boiler-plate/pkg/migration"
@@ -29,17 +26,15 @@ import (
 )
 
 var (
-	appConf            *appConfiguration.Config
-	baseHandler        *handler.BaseHTTPHandler
-	UsersHandler       *tempHandler.HTTPHandler
-	SubmissionsHandler *subHandler.HTTPHandler
-	sqlClientRepo      *db.SQLClientRepository
-	validate           *validator.Validate
-	httpClient         httpclient.Client
-	xvalidate          *xvalidator.Validator
-	grpcHandler        *handler.GRPCHandler
-	usersGrpcHandler   *tempHandler.GRPCHandler
-	redisClient        redisser.RedisClient
+	appConf        *appConfiguration.Config
+	baseHandler    *handler.BaseHTTPHandler
+	URLHandler     *urlHandler.HTTPHandler
+	sqlClientRepo  *db.SQLClientRepository
+	validate       *validator.Validate
+	httpClient     httpclient.Client
+	xvalidate      *xvalidator.Validator
+	urlGrpcHandler *urlHandler.GRPCHandler
+	redisClient    redisser.RedisClient
 )
 
 func initHttpclient() {
@@ -65,16 +60,13 @@ func initHTTP() {
 
 	// appConf.MysqlTZ = postgresClientRepo.TZ
 
-	baseHandler = handler.NewBaseHTTPHandler(sqlClientRepo.DB, appConf, sqlClientRepo, httpClient, grpcHandler)
+	baseHandler = handler.NewBaseHTTPHandler(sqlClientRepo.DB, appConf, sqlClientRepo, httpClient)
 
-	UsersRepo := UsersRepo.NewRepository(sqlClientRepo.DB, sqlClientRepo)
-	SubsRepo := SubmissionsRepo.NewRepository(sqlClientRepo.DB, sqlClientRepo)
+	URLRepo := URLRepo.NewRepository(sqlClientRepo.DB, sqlClientRepo)
 
-	UsersService := UsersService.NewService(appConf, UsersRepo, SubsRepo, sqlClientRepo.DB, redisClient, validate)
-	SubsService := SubmissionsService.NewService(appConf, SubsRepo, sqlClientRepo.DB, validate)
-	usersGrpcHandler = tempHandler.NewGRPCHandler(UsersService)
-	UsersHandler = tempHandler.NewHTTPHandler(baseHandler, usersGrpcHandler, UsersService)
-	SubmissionsHandler = subHandler.NewHTTPHandler(baseHandler, SubsService)
+	URLService := URLService.NewService(appConf, URLRepo, sqlClientRepo.DB, redisClient, validate)
+	urlGrpcHandler = urlHandler.NewGRPCHandler(URLService)
+	URLHandler = urlHandler.NewHTTPHandler(baseHandler, urlGrpcHandler, URLService)
 
 }
 

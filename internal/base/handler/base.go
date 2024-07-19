@@ -4,7 +4,9 @@ import (
 	"boiler-plate/app/appconf"
 	"boiler-plate/internal/base/app"
 	baseModel "boiler-plate/pkg/db"
+	"boiler-plate/pkg/exception"
 	"boiler-plate/pkg/httpclient"
+	"boiler-plate/pkg/httputils"
 	"boiler-plate/pkg/server"
 	"fmt"
 	"github.com/sirupsen/logrus"
@@ -19,12 +21,11 @@ type HandlerFn func(ctx *app.Context) *server.Response
 type HandlerFnInterface func(ctx *app.Context) *server.ResponseInterface
 
 type BaseHTTPHandler struct {
-	Handlers    interface{}
-	DB          *gorm.DB
-	AppConfig   *appconf.Config
-	BaseModel   *baseModel.SQLClientRepository
-	HttpClient  httpclient.Client
-	GRPCHandler *GRPCHandler
+	Handlers   interface{}
+	DB         *gorm.DB
+	AppConfig  *appconf.Config
+	BaseModel  *baseModel.SQLClientRepository
+	HttpClient httpclient.Client
 }
 
 func NewBaseHTTPHandler(
@@ -32,19 +33,32 @@ func NewBaseHTTPHandler(
 	appConfig *appconf.Config,
 	baseModel *baseModel.SQLClientRepository,
 	httpClient httpclient.Client,
-	grpcHandler *GRPCHandler,
 ) *BaseHTTPHandler {
 	return &BaseHTTPHandler{
-		DB:          db,
-		AppConfig:   appConfig,
-		BaseModel:   baseModel,
-		HttpClient:  httpClient,
-		GRPCHandler: grpcHandler,
+		DB:         db,
+		AppConfig:  appConfig,
+		BaseModel:  baseModel,
+		HttpClient: httpClient,
 	}
 }
 
 // Handler Basic Method ======================================================================================================
+func (b BaseHTTPHandler) JSON(e *gin.Context, status int, data interface{}) {
+	e.JSON(status, data)
+}
 
+func (b BaseHTTPHandler) Redirect(e *gin.Context, url string) {
+	e.Redirect(http.StatusFound, url)
+}
+
+func (b BaseHTTPHandler) AbortJSON(e *gin.Context, status int, data interface{}) {
+	e.AbortWithStatusJSON(status, data)
+}
+
+func (b BaseHTTPHandler) ExceptionJSON(e *gin.Context, exc *exception.Exception) {
+	code := httputils.GenErrorResponseException(exc)
+	b.AbortJSON(e, code.StatusCode, exc.Message)
+}
 func (b BaseHTTPHandler) AsJsonInterface(ctx *app.Context, status int, data interface{}) *server.ResponseInterface {
 
 	return &server.ResponseInterface{

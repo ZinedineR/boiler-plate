@@ -2,31 +2,38 @@ package api
 
 import (
 	"boiler-plate/internal/base/handler"
-	pb "boiler-plate/proto/helloworld/v1"
-	pbUsers "boiler-plate/proto/users/v1"
+	pbUrl "boiler-plate/proto/url/v1"
+	"context"
 	"fmt"
+	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"log"
 )
 
 func (h *HttpServe) setupGRPCRouter() {
-	pb.RegisterServiceServer(h.GRPCServer, h.base.GRPCHandler)
-	pbUsers.RegisterServiceServer(h.GRPCServer, h.UsersHandler.GRPCHandler)
+	pbUrl.RegisterServiceServer(h.GRPCServer, h.URLHandler.GRPCHandler)
 
 }
 
-func (h *HttpServe) setupUsersRouter() {
-	h.GuestRoute("GET", "/users", h.UsersHandler.Find)
-	h.GuestRoute("POST", "/users", h.UsersHandler.Create)
-	h.GuestRoute("PUT", "/users/:id", h.UsersHandler.Update)
-	h.GuestRoute("GET", "/users/:id", h.UsersHandler.Detail)
-	h.GuestRoute("DELETE", "/users/:id", h.UsersHandler.Delete)
-	h.GuestRoute("GET", "/users/:id/submissions", h.SubmissionsHandler.FindByUser)
-
-	h.GuestRoute("GET", "/submissions", h.SubmissionsHandler.Find)
-	h.GuestRoute("POST", "/submissions", h.SubmissionsHandler.Create)
-	h.GuestRoute("GET", "/submissions/:id", h.SubmissionsHandler.Detail)
-	h.GuestRoute("DELETE", "/submissions/:id", h.SubmissionsHandler.Delete)
+func (h *HttpServe) setupURLRouter() {
+	urlGroup := h.router.Group("api/v2/url")
+	urlGroup.POST("/", h.URLHandler.Create)
+	urlGroup.GET("/:shorturl", h.URLHandler.Detail)
 }
 
+func (h *HttpServe) setupGRPCGateway() {
+	client, err := grpc.NewClient(
+		"0.0.0.0:50051",
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := pbUrl.RegisterServiceHandler(context.Background(), h.GRPCGateway, client); err != nil {
+		log.Fatal("failed to register users gateway")
+	}
+	h.router.Group("/api/v2/*{grpc_gateway}").Any("", gin.WrapH(h.GRPCGateway))
+}
 func (h *HttpServe) UserRoute(method, path string, f handler.HandlerFnInterface) {
 	userRoute := h.router.Group("/api/v2")
 	switch method {

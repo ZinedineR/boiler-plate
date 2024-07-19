@@ -72,6 +72,24 @@ func Internal(message any, err error) *Exception {
 		Error:   err,
 	}
 }
+func (e *Exception) GetGrpcCode() uint32 {
+	switch e.Code {
+	case InvalidArgumentCode:
+		return 3
+	case NotFoundCode:
+		return 5
+	case AlreadyExistsCode:
+		return 6
+	case PermissionDeniedCode:
+		return 7
+	case UnauthenticatedCode:
+		return 16
+	case InternalErrorCode:
+		return 13
+	default:
+		return 13
+	}
+}
 
 // Conflict creates a new Exception with the AlreadyExistsCode error code.
 func Conflict(message any) *Exception {

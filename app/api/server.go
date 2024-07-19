@@ -3,15 +3,16 @@ package api
 import (
 	"boiler-plate/app/appconf"
 	"fmt"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 	"log"
 	"net"
 	"os"
 	"strings"
+	"time"
 
 	"boiler-plate/internal/base/handler"
-	subHandler "boiler-plate/internal/submissions/handler"
-	tempHandler "boiler-plate/internal/users/handler"
+	urlHandler "boiler-plate/internal/url/handler"
 	"boiler-plate/pkg/server"
 
 	"github.com/gin-contrib/cors"
@@ -20,35 +21,38 @@ import (
 )
 
 type HttpServe struct {
-	router             *gin.Engine
-	base               *handler.BaseHTTPHandler
-	UsersHandler       *tempHandler.HTTPHandler
-	SubmissionsHandler *subHandler.HTTPHandler
-	GRPCServer         *grpc.Server
+	router      *gin.Engine
+	base        *handler.BaseHTTPHandler
+	URLHandler  *urlHandler.HTTPHandler
+	GRPCServer  *grpc.Server
+	GRPCGateway *runtime.ServeMux
 }
 
 func (h *HttpServe) Run(config *appconf.Config) error {
-	h.setupUsersRouter()
-	h.setupDevRouter(config)
+	//h.setupURLRouter()
+	//h.setupDevRouter(config)
 	h.setupGRPCRouter()
 	h.base.Handlers = h
 	//if h.base.IsStaging() {
 	//	h.setupDevRouter()
 	//}
-	conn, err := net.Listen("tcp", ":"+config.AppEnvConfig.HttpPort)
+	conn, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := h.GRPCServer.Serve(conn); err != nil {
-		log.Fatalf("failed to serve: %v", err)
-	}
+	go func() {
+		if err := h.GRPCServer.Serve(conn); err != nil {
+			log.Fatalf("failed to serve: %v", err)
+		}
+	}()
+	time.Sleep(time.Second)
+	h.setupGRPCGateway()
 	return h.router.Run(fmt.Sprintf(":%s", config.AppEnvConfig.HttpPort))
 }
 
 func New(
 	appName string, base *handler.BaseHTTPHandler,
-	Users *tempHandler.HTTPHandler,
-	Submissions *subHandler.HTTPHandler,
+	Users *urlHandler.HTTPHandler,
 ) server.App {
 
 	if os.Getenv("APP_ENV") != "production" {
@@ -79,11 +83,13 @@ func New(
 		AllowCredentials: true,
 	}))
 	grpcServer := grpc.NewServer()
+	grpcGatewayMux := runtime.NewServeMux(
+		runtime.WithForwardResponseOption(responseHeaderMatcher))
 	return &HttpServe{
-		router:             r,
-		base:               base,
-		UsersHandler:       Users,
-		SubmissionsHandler: Submissions,
-		GRPCServer:         grpcServer,
+		router:      r,
+		base:        base,
+		URLHandler:  Users,
+		GRPCServer:  grpcServer,
+		GRPCGateway: grpcGatewayMux,
 	}
 }
