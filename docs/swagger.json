@@ -1,0 +1,114 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/urls": {
+            "post": {
+                "description": "Create a new URL and return the created URL",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "URL"
+                ],
+                "summary": "Create a new URL",
+                "parameters": [
+                    {
+                        "description": "URL",
+                        "name": "url",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.URL"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/httputils.DataSuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/domain.URL"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/httputils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "domain.URL": {
+            "type": "object",
+            "required": [
+                "longurl"
+            ],
+            "properties": {
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-07-19T10:57:42.454071+07:00"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "longurl": {
+                    "type": "string",
+                    "example": "http://google.com"
+                },
+                "shortutl": {
+                    "type": "string",
+                    "example": "http://google.com"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2024-07-19T10:57:42.454071+07:00"
+                }
+            }
+        },
+        "httputils.DataSuccessResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "message": {
+                    "type": "string"
+                },
+                "status_code": {
+                    "type": "integer"
+                }
+            }
+        },
+        "httputils.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "message": {},
+                "status_code": {
+                    "type": "integer"
+                }
+            }
+        }
+    }
+}

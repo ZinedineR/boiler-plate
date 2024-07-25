@@ -1,0 +1,72 @@
+definitions:
+  domain.URL:
+    properties:
+      created_at:
+        example: "2024-07-19T10:57:42.454071+07:00"
+        type: string
+      id:
+        example: 1
+        type: integer
+      longurl:
+        example: http://google.com
+        type: string
+      shortutl:
+        example: http://google.com
+        type: string
+      updated_at:
+        example: "2024-07-19T10:57:42.454071+07:00"
+        type: string
+    required:
+    - longurl
+    type: object
+  httputils.DataSuccessResponse:
+    properties:
+      data: {}
+      message:
+        type: string
+      status_code:
+        type: integer
+    type: object
+  httputils.ErrorResponse:
+    properties:
+      error:
+        type: string
+      message: {}
+      status_code:
+        type: integer
+    type: object
+info:
+  contact: {}
+paths:
+  /urls:
+    post:
+      consumes:
+      - application/json
+      description: Create a new URL and return the created URL
+      parameters:
+      - description: URL
+        in: body
+        name: url
+        required: true
+        schema:
+          $ref: '#/definitions/domain.URL'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/httputils.DataSuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.URL'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httputils.ErrorResponse'
+      summary: Create a new URL
+      tags:
+      - URL
+swagger: "2.0"

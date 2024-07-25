@@ -1,0 +1,139 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "URL Service",
+    "description": "User service handle API for CRUD users",
+    "version": "v2"
+  },
+  "tags": [
+    {
+      "name": "proto.url.v1.Service"
+    }
+  ],
+  "host": "localhost:8080",
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v2/url": {
+      "post": {
+        "operationId": "CreateURL",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/proto.url.v1.CreateURLResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/proto.url.v1.CreateURLRequest"
+            }
+          }
+        ],
+        "tags": [
+          "proto.url.v1.Service"
+        ]
+      }
+    },
+    "/api/v2/url/{shorturl}": {
+      "get": {
+        "operationId": "DetailURL",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/proto.url.v1.DetailURLResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "shorturl",
+            "description": "Request shorturl detailurl",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "proto.url.v1.Service"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "proto.url.v1.CreateURLRequest": {
+      "type": "object",
+      "properties": {
+        "longurl": {
+          "type": "string",
+          "title": "Go string to ProtoBuf string"
+        }
+      }
+    },
+    "proto.url.v1.CreateURLResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/proto.url.v1.URLs"
+        },
+        "response": {
+          "$ref": "#/definitions/proto.url.v1.MutationResponse"
+        }
+      }
+    },
+    "proto.url.v1.DetailURLResponse": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "title": "Response detailurl",
+          "allOf": [
+            {
+              "$ref": "#/definitions/proto.url.v1.URLs"
+            }
+          ]
+        }
+      }
+    },
+    "proto.url.v1.MutationResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "proto.url.v1.URLs": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "title": "Go int to ProtoBuf int32"
+        },
+        "longurl": {
+          "type": "string",
+          "title": "Go string to ProtoBuf string"
+        },
+        "shorturl": {
+          "type": "string",
+          "title": "Go string to ProtoBuf string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Go *time.Time to ProtoBuf Timestamp"
+        }
+      }
+    }
+  }
+}
